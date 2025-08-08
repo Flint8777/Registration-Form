@@ -179,6 +179,16 @@ body::before {
     /* 確実に表示されるようz-indexを設定 */
     position: relative;
     z-index: 10;
+    /* 白い長方形の背景を追加 */
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2rem 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    /* ヘッダー全体を少し中央寄せ */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 2rem;
 }
 
 .header-logo {
@@ -186,52 +196,65 @@ body::before {
     height: auto;
     /* ロゴの最大幅を設定 */
     max-height: 100px;
-    margin-bottom: 0.5rem;
-    /* ロゴが見やすくなるように背景を追加 */
-    background: rgba(255, 255, 255, 0.9);
-    padding: 0.8rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    /* ロゴの背景を透明にして、ヘッダーの白背景と統一 */
+    background: transparent;
+    padding: 0.5rem;
+    border-radius: 8px;
+    /* ロゴに軽い影を追加して立体感を演出 */
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
 }
 
 .header h1 {
     font-size: 2rem;
     /* レスポンシブベース */
     font-weight: 700;
-    /* 確実に表示されるようシンプルな色指定 */
-    color: #667eea;
-    margin-bottom: 0.5rem;
-    /* デバッグ用の背景と境界線（確実に見えるように） */
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 0.5rem;
-    border-radius: 8px;
-    border: 2px solid rgba(102, 126, 234, 0.3);
+    /* 明朝体フォントに変更 */
+    font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+    /* 黒文字に変更 */
+    color: #000000;
+    margin-bottom: 1rem;
+    /* 背景は透明に（ヘッダーの白背景を使用） */
+    background-color: transparent;
+    padding: 0.5rem 0;
+    border-radius: 0;
+    /* 境界線を削除 */
+    border: none;
     /* 行の高さを調整 */
     line-height: 1.2;
 }
 
-/* グラデーションテキストの代替実装（安全な方法） */
+/* グラデーションテキストの代替実装（無効化） */
 .header h1.gradient-text {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    /* グラデーション効果を無効化 */
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: #000000;
+    background-clip: unset;
+    color: #000000;
 }
 
-/* グラデーション文字をサポートするブラウザでのみ適用 */
+/* グラデーション文字をサポートするブラウザでのみ適用（無効化） */
 @supports (background-clip: text) and (-webkit-text-fill-color: transparent) {
     .header h1 {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        /* グラデーション効果を無効化して黒文字を維持 */
+        background: none;
+        -webkit-background-clip: unset;
+        -webkit-text-fill-color: #000000;
+        background-clip: unset;
+        color: #000000;
     }
 }
 
 .header p {
-    color: #666;
+    color: #333;
     font-size: 0.9rem;
     /* レスポンシブベース */
+    /* 明朝体フォントを適用 */
+    font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+    /* 行間を調整して読みやすく */
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
 }
 
 .form-group {
@@ -531,6 +554,20 @@ select.form-control {
     color: #8b4513;
     font-size: 0.9rem;
     /* レスポンシブベース */
+}
+
+/* フォームタイトル専用のスタイル */
+.form-title-card {
+    margin-top: 0;
+    margin-bottom: 2rem;
+    /* ヘッダーとの間隔を調整 */
+}
+
+.form-title-card h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #8b4513;
 }
 
 /* バリデーションメッセージ */
@@ -836,34 +873,50 @@ select.form-control {
     .header {
         /* モバイルでヘッダーのマージンを調整 */
         margin-bottom: 1rem;
+        /* モバイルでも白い背景を維持 */
+        padding: 1.5rem 1rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        border-radius: 12px;
     }
 
     .header-logo {
         max-height: 60px;
-        padding: 0.4rem;
+        padding: 0.2rem;
+        /* モバイルでもロゴの背景を透明に */
+        background: transparent;
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.1));
     }
 
     .header h1 {
         /* モバイルでのフォントサイズを大きく - より読みやすく */
         font-size: 1.8rem !important;
-        /* モバイルでは確実に表示されるよう通常の色を使用 */
-        color: #667eea !important;
-        -webkit-text-fill-color: initial !important;
-        -moz-text-fill-color: initial !important;
-        /* モバイルでもデバッグ用背景を追加 */
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        padding: 0.3rem !important;
-        border-radius: 6px !important;
-        border: 2px solid rgba(102, 126, 234, 0.5) !important;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif !important;
+        /* 黒文字に変更 */
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        -moz-text-fill-color: #000000 !important;
+        /* 背景を透明に（ヘッダーの白背景を使用） */
+        background-color: transparent !important;
+        padding: 0.2rem 0 !important;
+        border-radius: 0 !important;
+        /* 境界線を削除 */
+        border: none !important;
         /* モバイルでの行間調整 */
         line-height: 1.3 !important;
-        margin-bottom: 0.2rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
     .header p {
         /* モバイルでの説明文も読みやすく */
         font-size: 1rem;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.3rem;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+        /* 色をやや濃く */
+        color: #333;
+        line-height: 1.5;
     }
 
     .form-group {
@@ -890,6 +943,15 @@ select.form-control {
         padding: 1rem;
         margin-bottom: 1rem;
         border-radius: 8px;
+    }
+
+    .form-title-card {
+        /* モバイルでのフォームタイトル調整 */
+        margin-bottom: 1.5rem;
+    }
+
+    .form-title-card h2 {
+        font-size: 1.3rem;
     }
 
     .step-indicator {
@@ -972,12 +1034,30 @@ select.form-control {
         margin-top: 1rem;
     }
 
+    .header {
+        /* タブレットでのヘッダー調整 */
+        padding: 1.8rem 1.2rem;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 500px;
+    }
+
     .header h1 {
         font-size: 1.9rem;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+        /* 黒文字に変更 */
+        color: #000000;
+        background-color: transparent;
+        border: none;
     }
 
     .header p {
         font-size: 0.95rem;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+        color: #333;
+        line-height: 1.6;
     }
 
     .form-group label {
@@ -1018,12 +1098,30 @@ select.form-control {
         margin-top: 1.5rem;
     }
 
+    .header {
+        /* デスクトップでのヘッダー調整 */
+        padding: 2.5rem 2rem;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 650px;
+    }
+
     .header h1 {
         font-size: 2.3rem;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+        /* 黒文字に変更 */
+        color: #000000;
+        background-color: transparent;
+        border: none;
     }
 
     .header p {
         font-size: 1.05rem;
+        /* 明朝体フォントを適用 */
+        font-family: 'Times New Roman', 'Yu Mincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', 'HG明朝E', 'ＭＳ Ｐ明朝', 'MS PMincho', serif;
+        color: #333;
+        line-height: 1.6;
     }
 
     .form-group label {
