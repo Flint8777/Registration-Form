@@ -1,0 +1,112 @@
+<!-- 基本的なiframe埋め込み -->
+<iframe src="https://flint8777.github.io/TEST_KesenNuma-StarryNight/" width="100%" height="800" frameborder="0"
+    style="border: none; border-radius: 10px;">
+</iframe>
+
+<!-- レスポンシブ対応版（推奨） -->
+<div style="position: relative; width: 100%; max-width: 800px; margin: 0 auto;">
+    <iframe src="https://flint8777.github.io/TEST_KesenNuma-StarryNight/" style="
+            width: 100%; 
+            height: 800px; 
+            border: none; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        " scrolling="auto" title="気仙沼星空観望会 予約フォーム">
+    </iframe>
+</div>
+
+<!-- Studio用カスタマイズ版 -->
+<style>
+    .star-reservation-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin: 20px auto;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .star-reservation-iframe {
+        width: 100%;
+        height: 800px;
+        border: none;
+        display: block;
+        background: #fff;
+    }
+
+    /* モバイル対応 */
+    @media (max-width: 768px) {
+        .star-reservation-container {
+            margin: 10px;
+            border-radius: 10px;
+        }
+
+        .star-reservation-iframe {
+            height: 700px;
+        }
+    }
+
+    /* タブレット対応 */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .star-reservation-iframe {
+            height: 850px;
+        }
+    }
+
+    /* デスクトップ対応 */
+    @media (min-width: 1025px) {
+        .star-reservation-iframe {
+            height: 900px;
+        }
+    }
+</style>
+
+<div class="star-reservation-container">
+    <iframe class="star-reservation-iframe" src="https://flint8777.github.io/TEST_KesenNuma-StarryNight/"
+        scrolling="auto" loading="lazy" title="第5回気仙沼星空観望会 予約システム">
+    </iframe>
+</div>
+
+<!-- ローディング表示付き版 -->
+<style>
+    .iframe-loader {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #666;
+    }
+
+    .iframe-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<div class="star-reservation-container" style="position: relative; min-height: 800px;">
+    <div class="iframe-loader" id="iframeLoader">
+        <div class="iframe-spinner"></div>
+        <p>予約フォームを読み込み中...</p>
+    </div>
+    <iframe class="star-reservation-iframe" src="https://flint8777.github.io/TEST_KesenNuma-StarryNight/"
+        onload="document.getElementById('iframeLoader').style.display='none'" scrolling="auto"
+        title="第5回気仙沼星空観望会 予約システム">
+    </iframe>
+</div>

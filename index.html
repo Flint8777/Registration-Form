@@ -4,1168 +4,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第5回気仙沼星空観望会 - 予約システム</title>
+    <base target="_top">
+    <title>気仙沼星空観望会 - イベント参加予約</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
         rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            height: 100%;
-            font-size: 16px;
-            /* デスクトップベース */
-            -webkit-background-size: cover;
-            background-size: cover;
-        }
-
-        /* デバイス別ベースフォントサイズ調整 */
-        @media (max-width: 480px) {
-            html {
-                font-size: 14px;
-                /* 小さなモバイル画面 */
-            }
-        }
-
-        @media (min-width: 481px) and (max-width: 768px) {
-            html {
-                font-size: 15px;
-                /* タブレット */
-            }
-        }
-
-        @media (min-width: 769px) and (max-width: 1024px) {
-            html {
-                font-size: 16px;
-                /* 小さなデスクトップ */
-            }
-        }
-
-        @media (min-width: 1025px) {
-            html {
-                font-size: 18px;
-                /* 大きなデスクトップ */
-            }
-        }
-
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            color: #ffffff;
-            overflow-x: hidden;
-
-            /* iOS Safari最適化された背景 */
-            background: linear-gradient(135deg,
-                    #0c1445 0%,
-                    #1a237e 25%,
-                    #283593 50%,
-                    #3949ab 75%,
-                    #5c6bc0 100%);
-            background-attachment: fixed;
-
-            /* iOS Safari対応 */
-            -webkit-background-size: cover;
-            background-size: cover;
-
-            /* iOS Safariでのスクロール問題対応 */
-            -webkit-overflow-scrolling: touch;
-
-            position: relative;
-        }
-
-        /* iOS Safari専用背景修正 */
-        @supports (-webkit-overflow-scrolling: touch) {
-            body {
-                background-attachment: scroll;
-                /* iOS Safariでは fixed を無効化 */
-                background-repeat: no-repeat;
-                background-size: 100% 100%;
-                min-height: 100vh;
-            }
-        }
-
-        /* 軽量版星空アニメーション（iOS最適化） */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(2px 2px at 20px 30px, #fff, transparent),
-                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
-                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.6), transparent),
-                radial-gradient(2px 2px at 160px 30px, #fff, transparent);
-            background-repeat: repeat;
-            background-size: 200px 100px;
-            animation: sparkle 20s linear infinite;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.6;
-        }
-
-        /* iOS Safari用の軽量アニメーション */
-        @supports (-webkit-overflow-scrolling: touch) {
-            body::before {
-                animation: none;
-                /* iOS Safariではアニメーション無効化 */
-                opacity: 0.3;
-                /* 透明度を下げてパフォーマンス向上 */
-            }
-        }
-
-        @keyframes sparkle {
-            from {
-                transform: translateX(0);
-            }
-
-            to {
-                transform: translateX(200px);
-            }
-        }
-
-        .container {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 480px;
-            /* モバイルファースト */
-            margin: 0 auto;
-            padding: 1rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* タブレット対応 */
-        @media (min-width: 481px) and (max-width: 768px) {
-            .container {
-                max-width: 600px;
-                padding: 1.5rem;
-            }
-        }
-
-        /* デスクトップ対応 - より大きなフレーム */
-        @media (min-width: 769px) {
-            .container {
-                max-width: 800px;
-                /* デスクトップでは大きめ */
-                padding: 2rem;
-            }
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
-            z-index: 3;
-        }
-
-        .logo-container {
-            margin-bottom: 1rem;
-        }
-
-        .logo-img {
-            max-width: 100%;
-            height: auto;
-            width: 200px;
-            /* ベースサイズ */
-        }
-
-        /* タブレット用ロゴサイズ */
-        @media (min-width: 481px) and (max-width: 768px) {
-            .logo-img {
-                width: 250px;
-            }
-        }
-
-        /* デスクトップ用ロゴサイズ */
-        @media (min-width: 769px) {
-            .logo-img {
-                width: 300px;
-            }
-        }
-
-        .form-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            z-index: 3;
-            flex: 1;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            /* 小さな画面での折り返し対応 */
-        }
-
-        .step {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 0.5rem 0.5rem 0;
-            /* 下マージン追加 */
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .step.active {
-            background: #FFD700;
-            color: #1a237e;
-            transform: scale(1.1);
-        }
-
-        .step.completed {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .step-content {
-            display: none;
-        }
-
-        .step-content.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #FFD700;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 0.5rem;
-        }
-
-        .radio-option {
-            position: relative;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            flex: 1;
-            min-width: 120px;
-            justify-content: center;
-        }
-
-        .radio-option:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .radio-option input[type="radio"] {
-            display: none;
-        }
-
-        .radio-option input[type="radio"]:checked+span {
-            color: #1a237e;
-        }
-
-        .radio-option input[type="radio"]:checked {
-            background: #FFD700;
-            border-color: #FFD700;
-        }
-
-        .radio-option.selected {
-            background: #FFD700;
-            border-color: #FFD700;
-            color: #1a237e;
-            font-weight: bold;
-            transform: scale(1.02);
-        }
-
-        .radio-option span {
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .workshop-details {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: none;
-        }
-
-        .workshop-details.show {
-            display: block;
-            animation: slideDown 0.5s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: none;
-            font-family: inherit;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #FFD700, #FFA000);
-            color: #1a237e;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .error-message {
-            background: rgba(244, 67, 54, 0.2);
-            color: #ffcdd2;
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1rem 0;
-            border: 1px solid rgba(244, 67, 54, 0.3);
-            display: none;
-        }
-
-        .success-message {
-            background: rgba(76, 175, 80, 0.2);
-            color: #c8e6c9;
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1rem 0;
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid #FFD700;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .remaining-seats {
-            font-size: 0.9rem;
-            color: #FFD700;
-            margin-left: 0.5rem;
-            font-weight: bold;
-        }
-
-        .full-seats {
-            color: #ff9800;
-        }
-
-        /* レスポンシブ調整 */
-        @media (max-width: 480px) {
-            .form-container {
-                padding: 1.5rem;
-                border-radius: 15px;
-            }
-
-            .radio-group {
-                flex-direction: column;
-            }
-
-            .radio-option {
-                min-width: auto;
-                margin-bottom: 0.5rem;
-            }
-
-            .buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                min-width: auto;
-                margin-bottom: 0.5rem;
-            }
-
-            .step {
-                margin: 0 0.25rem 0.5rem 0;
-                width: 1.8rem;
-                height: 1.8rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* select要素のスタイリング */
-        .form-group select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="white" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 0.7rem top 50%;
-            background-size: 0.65rem auto;
-            padding-right: 2.5rem;
-        }
-
-        /* オプションのスタイリング */
-        .form-group select option {
-            background-color: #1a237e;
-            color: white;
-            padding: 0.5rem;
-        }
-
-        /* Firefoxでのselect要素対応 */
-        @-moz-document url-prefix() {
-            .form-group select {
-                background-image: none;
-            }
-        }
-
-        /* 高コントラストモード対応 */
-        @media (prefers-contrast: high) {
-            .form-container {
-                background: rgba(0, 0, 0, 0.8);
-                border: 2px solid white;
-            }
-
-            .form-group input,
-            .form-group select {
-                border: 2px solid white;
-                background: rgba(0, 0, 0, 0.8);
-            }
-        }
-
-        /* ダークモード対応 */
-        @media (prefers-color-scheme: dark) {
-
-            /* 既にダークテーマなので調整は最小限 */
-            .form-group input::placeholder {
-                color: rgba(255, 255, 255, 0.8);
-            }
-        }
-
-        /* 印刷用スタイル */
-        @media print {
-            body {
-                background: white;
-                color: black;
-            }
-
-            .form-container {
-                background: white;
-                border: 1px solid black;
-                box-shadow: none;
-            }
-
-            .btn {
-                display: none;
-            }
-        }
-
-        /* Focus visible 対応（アクセシビリティ向上） */
-        .btn:focus-visible,
-        .form-group input:focus-visible,
-        .form-group select:focus-visible,
-        .radio-option:focus-visible {
-            outline: 2px solid #FFD700;
-            outline-offset: 2px;
-        }
-
-        /* ホバー効果をタッチデバイスで無効化 */
-        @media (hover: none) {
-
-            .btn-primary:hover,
-            .btn-secondary:hover,
-            .radio-option:hover {
-                transform: none;
-                box-shadow: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo-container">
-                <img src="https://drive.google.com/uc?id=1cAbcElVcDITaF-m_XIrwMEPuTaZZqH0v" alt="気仙沼星空観望会ロゴ"
-                    class="logo-img"
-                    onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
-                <h1 id="fallback-title" style="display: none; font-size: 1.8rem; margin: 1rem 0; color: #FFD700;">
-                    第5回気仙沼星空観望会
-                </h1>
-            </div>
-        </div>
-
-        <div class="form-container">
-            <!-- ステップインジケーター -->
-            <div class="step-indicator">
-                <div class="step active" id="step1">1</div>
-                <div class="step" id="step2">2</div>
-                <div class="step" id="step3">3</div>
-            </div>
-
-            <!-- エラー・成功メッセージ -->
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
-
-            <!-- ローディング -->
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>処理中...</p>
-            </div>
-
-            <!-- フォーム -->
-            <form id="reservationForm">
-                <!-- Step 1: 基本情報 -->
-                <div class="step-content active" id="content1">
-                    <h2 style="margin-bottom: 1.5rem; text-align: center; color: #FFD700;">基本情報</h2>
-
-                    <div class="form-group">
-                        <label for="representativeName">代表者氏名 *</label>
-                        <input type="text" id="representativeName" name="代表者氏名" required placeholder="山田太郎">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="region">来場地域 *</label>
-                        <select id="region" name="来場地域" required>
-                            <option value="">選択してください</option>
-                            <option value="気仙沼市内">気仙沼市内</option>
-                            <option value="宮城県内（気仙沼市以外）">宮城県内（気仙沼市以外）</option>
-                            <option value="岩手県">岩手県</option>
-                            <option value="その他">その他</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">メールアドレス *</label>
-                        <input type="email" id="email" name="メールアドレス" required placeholder="example@email.com">
-                    </div>
-
-                    <div class="buttons">
-                        <button type="button" class="btn btn-primary" onclick="nextStep(1)">
-                            次へ →
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 2: ワークショップ参加 -->
-                <div class="step-content" id="content2">
-                    <h2 style="margin-bottom: 1.5rem; text-align: center; color: #FFD700;">ワークショップ参加</h2>
-
-                    <div class="form-group">
-                        <label>ワークショップに参加しますか？ *</label>
-                        <div class="radio-group">
-                            <label class="radio-option">
-                                <input type="radio" name="ワークショップ参加" value="参加する" onchange="toggleWorkshopDetails()">
-                                <span>参加する</span>
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="ワークショップ参加" value="参加しない" onchange="toggleWorkshopDetails()">
-                                <span>参加しない</span>
-                            </label>
-                        </div>
-
-                        <div class="workshop-details" id="workshopDetails">
-                            <div class="form-group">
-                                <label for="participantCount">ワークショップ参加人数 *</label>
-                                <select id="participantCount" name="ワークショップ参加人数">
-                                    <option value="">選択してください</option>
-                                    <option value="1">1人</option>
-                                    <option value="2">2人</option>
-                                    <option value="3">3人</option>
-                                    <option value="4">4人</option>
-                                    <option value="5">5人</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="workshopPart">予約する部 *</label>
-                                <select id="workshopPart" name="予約する部">
-                                    <option value="">残席情報を読み込み中...</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="buttons">
-                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
-                            ← 前へ
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="nextStep(2)">
-                            次へ →
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 3: 確認・送信 -->
-                <div class="step-content" id="content3">
-                    <h2 style="margin-bottom: 1.5rem; text-align: center; color: #FFD700;">予約内容確認</h2>
-
-                    <div id="confirmationDetails">
-                        <!-- JavaScript で動的に生成 -->
-                    </div>
-
-                    <div class="buttons">
-                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
-                            ← 前へ
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            予約を確定する
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
     </div>
 
-    <script>
-        // GAS API のURL（実際のスクリプトIDに置き換えてください）
-        const API_URL = 'https://script.google.com/macros/s/***REMOVED***/exec';
-
-        let currentStep = 1;
-        let workshopParts = [];
-
-        // ページ読み込み時の初期化
-        document.addEventListener('DOMContentLoaded', function () {
-            loadWorkshopParts();
-            setupFormValidation();
-            setupRadioStyles();
-        });
-
-        // 残席情報を読み込む
-        async function loadWorkshopParts() {
-            try {
-                console.log('残席情報を取得中...');
-
-                const response = await fetch(`${API_URL}?action=getParts`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    workshopParts = data.data;
-                    updateWorkshopPartsSelect();
-                    console.log('残席情報取得完了');
-                } else {
-                    throw new Error(data.error || '残席情報の取得に失敗しました');
-                }
-            } catch (error) {
-                console.error('残席情報取得エラー:', error);
-                showMessage('残席情報の取得に失敗しました。ページを再読み込みしてください。', 'error');
-
-                // フォールバック: 手動で部を設定
-                const fallbackParts = [
-                    { name: '第1部（13:30開始）', remaining: 5 },
-                    { name: '第2部（14:00開始）', remaining: 5 },
-                    { name: '第3部（14:30開始）', remaining: 5 },
-                    { name: '第4部（15:00開始）', remaining: 5 },
-                    { name: '第5部（15:30開始）', remaining: 5 },
-                    { name: '第6部（16:00開始）', remaining: 5 },
-                    { name: '第7部（16:30開始）', remaining: 5 },
-                    { name: '第8部（17:00開始）', remaining: 5 },
-                    { name: '第9部（17:30開始）', remaining: 5 },
-                    { name: '第10部（18:00開始）', remaining: 5 },
-                    { name: '第11部（18:30開始）', remaining: 5 },
-                    { name: '第12部（19:00開始）', remaining: 5 }
-                ];
-                workshopParts = fallbackParts;
-                updateWorkshopPartsSelect();
-            }
-        }
-
-        // ワークショップ部のセレクトボックスを更新
-        function updateWorkshopPartsSelect() {
-            const select = document.getElementById('workshopPart');
-            select.innerHTML = '<option value="">選択してください</option>';
-
-            workshopParts.forEach(part => {
-                const option = document.createElement('option');
-                option.value = part.name;
-
-                if (part.remaining > 0) {
-                    option.textContent = `${part.name} (残り${part.remaining}席)`;
-                    option.className = 'remaining-seats';
-                } else {
-                    option.textContent = `${part.name} (満席)`;
-                    option.disabled = true;
-                    option.className = 'full-seats';
-                }
-
-                select.appendChild(option);
-            });
-        }
-
-        // ステップ移動
-        function nextStep(step) {
-            if (validateStep(step)) {
-                if (step === 2) {
-                    showConfirmation();
-                }
-
-                currentStep = step + 1;
-                updateStepDisplay();
-            }
-        }
-
-        function prevStep(step) {
-            currentStep = step - 1;
-            updateStepDisplay();
-        }
-
-        function updateStepDisplay() {
-            // ステップインジケーター更新
-            for (let i = 1; i <= 3; i++) {
-                const stepElement = document.getElementById(`step${i}`);
-                const contentElement = document.getElementById(`content${i}`);
-
-                stepElement.classList.remove('active', 'completed');
-                contentElement.classList.remove('active');
-
-                if (i === currentStep) {
-                    stepElement.classList.add('active');
-                    contentElement.classList.add('active');
-                } else if (i < currentStep) {
-                    stepElement.classList.add('completed');
-                }
-            }
-        }
-
-        // ステップバリデーション
-        function validateStep(step) {
-            hideMessage();
-
-            switch (step) {
-                case 1:
-                    const name = document.getElementById('representativeName').value.trim();
-                    const region = document.getElementById('region').value;
-                    const email = document.getElementById('email').value.trim();
-
-                    if (!name) {
-                        showMessage('代表者氏名を入力してください。', 'error');
-                        return false;
-                    }
-                    if (!region) {
-                        showMessage('来場地域を選択してください。', 'error');
-                        return false;
-                    }
-                    if (!email) {
-                        showMessage('メールアドレスを入力してください。', 'error');
-                        return false;
-                    }
-                    if (!isValidEmail(email)) {
-                        showMessage('有効なメールアドレスを入力してください。', 'error');
-                        return false;
-                    }
-                    break;
-
-                case 2:
-                    const workshopParticipation = document.querySelector('input[name="ワークショップ参加"]:checked');
-
-                    if (!workshopParticipation) {
-                        showMessage('ワークショップ参加の選択をしてください。', 'error');
-                        return false;
-                    }
-
-                    if (workshopParticipation.value === '参加する') {
-                        const participantCount = document.getElementById('participantCount').value;
-                        const workshopPart = document.getElementById('workshopPart').value;
-
-                        if (!participantCount) {
-                            showMessage('ワークショップ参加人数を選択してください。', 'error');
-                            return false;
-                        }
-                        if (!workshopPart) {
-                            showMessage('予約する部を選択してください。', 'error');
-                            return false;
-                        }
-
-                        // 残席チェック
-                        const selectedPart = workshopParts.find(part => part.name === workshopPart);
-                        if (selectedPart && selectedPart.remaining < parseInt(participantCount)) {
-                            showMessage(`${workshopPart}の残席が不足しています。残席: ${selectedPart.remaining}席`, 'error');
-                            return false;
-                        }
-                    }
-                    break;
-            }
-
-            return true;
-        }
-
-        // メールアドレス検証
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
-
-        // ワークショップ詳細の表示切り替え
-        function toggleWorkshopDetails() {
-            const workshopParticipation = document.querySelector('input[name="ワークショップ参加"]:checked');
-            const workshopDetails = document.getElementById('workshopDetails');
-
-            if (workshopParticipation && workshopParticipation.value === '参加する') {
-                workshopDetails.classList.add('show');
-                document.getElementById('participantCount').required = true;
-                document.getElementById('workshopPart').required = true;
-            } else {
-                workshopDetails.classList.remove('show');
-                document.getElementById('participantCount').required = false;
-                document.getElementById('workshopPart').required = false;
-                document.getElementById('participantCount').value = '';
-                document.getElementById('workshopPart').value = '';
-            }
-        }
-
-        // 確認画面の表示
-        function showConfirmation() {
-            const confirmationDiv = document.getElementById('confirmationDetails');
-            const formData = new FormData(document.getElementById('reservationForm'));
-
-            let html = '<div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 10px;">';
-
-            html += `<h3 style="color: #FFD700; margin-bottom: 1rem;">予約内容</h3>`;
-            html += `<p><strong>代表者氏名:</strong> ${formData.get('代表者氏名')}</p>`;
-            html += `<p><strong>来場地域:</strong> ${formData.get('来場地域')}</p>`;
-            html += `<p><strong>メールアドレス:</strong> ${formData.get('メールアドレス')}</p>`;
-            html += `<p><strong>ワークショップ参加:</strong> ${formData.get('ワークショップ参加')}</p>`;
-
-            if (formData.get('ワークショップ参加') === '参加する') {
-                html += `<p><strong>参加人数:</strong> ${formData.get('ワークショップ参加人数')}人</p>`;
-                html += `<p><strong>予約する部:</strong> ${formData.get('予約する部')}</p>`;
-            }
-
-            html += '</div>';
-            html += '<p style="margin-top: 1rem; font-size: 0.9rem; color: #FFD700;">上記の内容で予約を確定します。よろしいですか？</p>';
-
-            confirmationDiv.innerHTML = html;
-        }
-
-        // フォーム送信（CORS問題回避のためフォーム送信方式に変更）
-        document.getElementById('reservationForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            if (!validateStep(2)) {
-                return;
-            }
-
-            try {
-                showLoading(true);
-                hideMessage();
-
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData.entries());
-
-                console.log('送信データ:', data);
-
-                // CORS問題を回避するため、隠しiframeを使用した従来のフォーム送信
-                await submitViaIframe(data);
-
-            } catch (error) {
-                console.error('送信エラー:', error);
-                showLoading(false);
-                showMessage('予約の送信に失敗しました: ' + error.message, 'error');
-            }
-        });
-
-        // iframe経由でのフォーム送信（CORS回避）
-        async function submitViaIframe(data) {
-            return new Promise((resolve, reject) => {
-                // 隠しフォームを作成
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = API_URL;
-                form.target = 'submit-iframe';
-                form.style.display = 'none';
-
-                // データをhidden inputとして追加
-                Object.keys(data).forEach(key => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = data[key];
-                    form.appendChild(input);
-                });
-
-                // 隠しiframeを作成
-                const iframe = document.createElement('iframe');
-                iframe.name = 'submit-iframe';
-                iframe.style.display = 'none';
-
-                // レスポンス処理
-                iframe.onload = function () {
-                    try {
-                        // レスポンスの処理（成功とみなす）
-                        showLoading(false);
-                        showMessage('予約が完了しました！確認メールをご確認ください。', 'success');
-
-                        // フォームをリセット
-                        document.getElementById('reservationForm').reset();
-                        currentStep = 1;
-                        updateStepDisplay();
-                        toggleWorkshopDetails();
-
-                        // 残席情報を再読み込み
-                        setTimeout(() => {
-                            loadWorkshopParts();
-                        }, 2000);
-
-                        resolve();
-                    } catch (error) {
-                        reject(error);
-                    } finally {
-                        // クリーンアップ
-                        document.body.removeChild(form);
-                        document.body.removeChild(iframe);
-                    }
-                };
-
-                iframe.onerror = function () {
-                    reject(new Error('送信に失敗しました'));
-                    document.body.removeChild(form);
-                    document.body.removeChild(iframe);
-                };
-
-                // DOMに追加して送信
-                document.body.appendChild(iframe);
-                document.body.appendChild(form);
-                form.submit();
-            });
-        }
-
-        // メッセージ表示
-        function showMessage(message, type) {
-            hideMessage();
-
-            const messageDiv = type === 'error' ?
-                document.getElementById('errorMessage') :
-                document.getElementById('successMessage');
-
-            messageDiv.textContent = message;
-            messageDiv.style.display = 'block';
-
-            // 成功メッセージは自動で非表示
-            if (type === 'success') {
-                setTimeout(() => {
-                    hideMessage();
-                }, 5000);
-            }
-        }
-
-        function hideMessage() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        // ローディング表示
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const form = document.getElementById('reservationForm');
-
-            if (show) {
-                loading.style.display = 'block';
-                form.style.display = 'none';
-            } else {
-                loading.style.display = 'none';
-                form.style.display = 'block';
-            }
-        }
-
-        // ラジオボタンのスタイル設定
-        function setupRadioStyles() {
-            const radioOptions = document.querySelectorAll('.radio-option');
-
-            radioOptions.forEach(option => {
-                option.addEventListener('click', function () {
-                    const radio = this.querySelector('input[type="radio"]');
-                    const name = radio.name;
-
-                    // 同じname属性のラジオボタンから選択状態を削除
-                    document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
-                        r.closest('.radio-option').classList.remove('selected');
-                    });
-
-                    // クリックされたオプションを選択状態に
-                    radio.checked = true;
-                    this.classList.add('selected');
-
-                    // ワークショップ詳細の表示切り替え
-                    if (name === 'ワークショップ参加') {
-                        toggleWorkshopDetails();
-                    }
-                });
-            });
-        }
-
-        // フォームバリデーション設定
-        function setupFormValidation() {
-            // リアルタイムバリデーション
-            const inputs = document.querySelectorAll('input, select');
-
-            inputs.forEach(input => {
-                input.addEventListener('blur', function () {
-                    if (this.hasAttribute('required') && !this.value.trim()) {
-                        this.style.borderColor = '#f44336';
-                    } else {
-                        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    }
-                });
-
-                input.addEventListener('input', function () {
-                    if (this.style.borderColor === 'rgb(244, 67, 54)') {
-                        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    }
-                });
-            });
-        }
-
-        // 定期的な残席情報更新（5分ごと）
-        setInterval(() => {
-            loadWorkshopParts();
-        }, 300000);
-
-        // API接続テスト関数（デバッグ用）
-        async function testApiConnection() {
-            try {
-                const response = await fetch(`${API_URL}?action=health`);
-                const data = await response.json();
-                console.log('API接続テスト:', data);
-                return data.success;
-            } catch (error) {
-                console.error('API接続テストエラー:', error);
-                return false;
-            }
-        }
-
-        // 初期化時にAPI接続をテスト
-        testApiConnection().then(connected => {
-            if (!connected) {
-                showMessage('サーバーとの接続に問題があります。しばらく時間をおいて再度お試しください。', 'error');
-            }
-        });
-    </script>
+    <div class="container">
+        <div class="header">
+            <h1>第5回</h1>
+            <img src="https://drive.google.com/thumbnail?id=1cAbcElVcDITaF-m_XIrwMEPuTaZZqH0v&sz=w400" alt="気仙沼星空観望会"
+                class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="header-fallback">
+                気仙沼星空観望会
+            </div>
+            <p>港町で、星を釣ろう。</p>
+            <p>～気仙沼のわざで宇宙をたぐり寄せる～</p>
+        </div>
+
+        <!-- ステップインジケーター -->
+        <div class="step-indicator">
+            <div class="step active" id="step-1">1</div>
+            <div class="step" id="step-2">2</div>
+            <div class="step" id="step-3">3</div>
+            <div class="step" id="step-4">✓</div>
+        </div>
+
+        <!-- エラー・成功メッセージ -->
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- ローディング -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>処理中…</p>
+        </div>
+
+        <form id="reservation-form">
+            <!-- ステップ1: 基本情報 -->
+            <div class="step-content active" id="content-1">
+                <div class="info-card">
+                    <strong>👤基本情報の入力</strong><br>
+                    代表者の情報をご入力ください
+                </div>
+
+                <div class="form-group">
+                    <label for="代表者氏名">👤 代表者氏名</label>
+                    <input type="text" id="代表者氏名" name="代表者氏名" class="form-control" required
+                        placeholder="代表者のお名前を入力してください">
+                </div>
+
+                <div class="form-group">
+                    <label for="来場地域">📍 どちらからお越しですか</label>
+                    <select id="来場地域" name="来場地域" class="form-control" required>
+                        <option value="">地域を選択してください</option>
+                        <option value="気仙沼市内">気仙沼市内</option>
+                        <option value="宮城県内（気仙沼市以外）">宮城県内（気仙沼市以外）</option>
+                        <option value="岩手県">岩手県</option>
+                        <option value="福島県">福島県</option>
+                        <option value="その他東北地方">その他東北地方</option>
+                        <option value="関東地方">関東地方</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="メールアドレス">📧 メールアドレス</label>
+                    <input type="email" id="メールアドレス" name="メールアドレス" class="form-control" required
+                        placeholder="連絡先メールアドレスを入力してください">
+                    <div class="email-validation-message" id="email-validation-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ワークショップ参加">🔬 ワークショップ（月齢キーホルダー作り）に参加されますか？</label>
+                    <select id="ワークショップ参加" name="ワークショップ参加" class="form-control" required>
+                        <option value="">選択してください</option>
+                        <option value="参加する">参加する</option>
+                        <option value="参加しない">参加しない（観望会のみ）</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ステップ2: ワークショップ詳細 -->
+            <div class="step-content" id="content-2">
+                <div class="info-card">
+                    <p>ワークショップは、「この時間にしか行けない！」という方にも安心してご参加いただけるよう、各時間帯に予約枠をご用意しております。</p>
+                    <p>ただし、</p>
+                    <p>✅ ご予約なしでも、当日空きがあれば自由にご参加いただけます！</p>
+                    <p>❗️予約枠が満席になった時間帯は、選択肢から削除されていきます。</p>
+                    <p>みなさまのご参加を心よりお待ちしております！</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="ワークショップ参加人数">👥 ワークショップ参加人数</label>
+                    <div class="select-wrapper">
+                        <select id="ワークショップ参加人数" name="ワークショップ参加人数" class="form-control" required>
+                            <option value="">参加人数を選択してください</option>
+                            <option value="1">1人</option>
+                            <option value="2">2人</option>
+                            <option value="3">3人</option>
+                            <option value="4">4人</option>
+                            <option value="5">5人</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="予約する部">⏰ 予約する部</label>
+                    <div class="select-wrapper">
+                        <select id="予約する部" name="予約する部" class="form-control">
+                            <option value="">予約する部を選択してください</option>
+                            <!-- JSで動的に選択肢追加 -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステップ3: 確認・登録 -->
+            <div class="step-content" id="content-3">
+                <div class="info-card">
+                    <strong>✅ 入力内容の確認</strong><br>
+                    以下の内容で登録いたします
+                </div>
+
+                <div id="confirmation-content">
+                    <!-- JSで動的に確認内容を表示 -->
+                </div>
+            </div>
+
+            <!-- ステップ4: 完了 -->
+            <div class="step-content" id="content-4">
+                <div class="completion-screen">
+                    <div class="completion-icon">🎉</div>
+                    <div class="completion-title">予約が完了しました！</div>
+                    <div class="completion-message">
+                        ご予約ありがとうございます。<br>
+                        確認メールをお送りいたしましたので、ご確認ください。<br>
+                        当日は気をつけてお越しください。
+                    </div>
+                    <button type="button" class="new-reservation-btn">
+                        新しい予約を作成
+                    </button>
+                </div>
+            </div>
+
+            <!-- ナビゲーションボタン -->
+            <div class="step-navigation" id="navigation">
+                <button type="button" class="nav-btn back" id="back-btn">
+                    ← 戻る
+                </button>
+                <button type="button" class="nav-btn next" id="next-btn">
+                    次へ →
+                </button>
+                <button type="button" class="nav-btn submit" id="submit-btn">
+                    🎯 登録完了
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
-
 
 </html>
