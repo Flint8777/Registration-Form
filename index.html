@@ -754,7 +754,7 @@
         // 残席情報を読み込む
         async function loadWorkshopParts() {
             try {
-                showMessage('残席情報を取得中...', 'info');
+                console.log('残席情報を取得中...');
 
                 const response = await fetch(`${API_URL}?action=getParts`);
 
@@ -767,7 +767,7 @@
                 if (data.success) {
                     workshopParts = data.data;
                     updateWorkshopPartsSelect();
-                    hideMessage();
+                    console.log('残席情報取得完了');
                 } else {
                     throw new Error(data.error || '残席情報の取得に失敗しました');
                 }
@@ -1053,34 +1053,6 @@
                 form.submit();
             });
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-        const result = await response.json();
-
-        showLoading(false);
-
-        if (result.success) {
-            showMessage(result.message, 'success');
-            // フォームをリセット
-            this.reset();
-            currentStep = 1;
-            updateStepDisplay();
-            toggleWorkshopDetails();
-            // 残席情報を再読み込み
-            setTimeout(() => {
-                loadWorkshopParts();
-            }, 2000);
-        } else {
-            throw new Error(result.error || '予約の送信に失敗しました');
-        }
-
-            } catch (error) {
-            console.error('送信エラー:', error);
-            showLoading(false);
-            showMessage('予約の送信に失敗しました: ' + error.message, 'error');
-        }
-        });
 
         // メッセージ表示
         function showMessage(message, type) {
