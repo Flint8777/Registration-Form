@@ -24,11 +24,7 @@
 ├── script.js           # JavaScript機能
 ├── iframe-embed-codes.html  # 埋め込み用コード集
 ├── README.md           # 本仕様書
-├── github-pages-setup.md    # GitHub Pages設定手順
-├── deployment-guide.md      # デプロイガイド
-├── iframe-embedding-guide.md # 埋め込みガイド
-├── Code.gs             # Google Apps Script バックエンド
-└── appsscript.json     # GAS設定ファイル
+└── Code.gs             # Google Apps Script バックエンド
 ```
 
 ### 技術スタック
