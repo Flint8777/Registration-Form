@@ -47,14 +47,10 @@ html {
 
 body {
     font-family: 'Noto Sans JP', sans-serif;
-    /* iOS対応 - 確実に背景を表示するための複数のフォールバック */
-    background-color: #667eea !important;
-    /* iOS Safari用の追加設定 */
-    background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2)) !important;
-    background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    background: -moz-linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    background: -o-linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    /* 背景を単色の灰色に変更 */
+    background-color: #f0f0f0 !important;
+    /* iOS Safari用も単色に設定 */
+    background: #f0f0f0 !important;
     /* iOS対応 - 背景固定をスクロールに変更 */
     background-attachment: scroll;
     background-repeat: no-repeat;
@@ -79,8 +75,7 @@ body {
 /* iOS専用の背景強化 */
 @supports (-webkit-touch-callout: none) {
     body {
-        background: #667eea !important;
-        background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, #667eea), color-stop(100%, #764ba2)) !important;
+        background: #f0f0f0 !important;
         min-height: 100vh !important;
         min-height: -webkit-fill-available !important;
     }
@@ -91,8 +86,7 @@ body {
 
     html,
     body {
-        background: #667eea !important;
-        background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, #667eea), color-stop(100%, #764ba2)) !important;
+        background: #f0f0f0 !important;
         background-attachment: scroll !important;
         background-size: cover !important;
         background-repeat: no-repeat !important;
@@ -104,8 +98,7 @@ body {
 /* Chrome on iOS 対応 */
 @supports (-webkit-touch-callout: none) and (not (translate: none)) {
     body {
-        background: #667eea !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background: #f0f0f0 !important;
     }
 }
 
@@ -143,10 +136,15 @@ body::before {
 }
 
 .container {
-    background: rgba(255, 255, 255, 0.95);
+    /* 紫基調のグラデーション背景に変更 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* iOS Safari用の追加設定 */
+    background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: -moz-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: -o-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     backdrop-filter: blur(10px);
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     padding: 2.5rem;
     width: 100%;
     max-width: 800px;
@@ -179,11 +177,11 @@ body::before {
     /* 確実に表示されるようz-indexを設定 */
     position: relative;
     z-index: 10;
-    /* 白い長方形の背景を追加 */
-    background: rgba(255, 255, 255, 0.95);
+    /* 白い長方形の背景を追加（紫背景に映えるように） */
+    background: rgba(255, 255, 255, 0.98);
     padding: 2rem 1.5rem;
     border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
     /* ヘッダー全体を少し中央寄せ */
     max-width: 600px;
     margin-left: auto;
@@ -266,9 +264,10 @@ body::before {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #333;
+    color: #ffffff;
     font-size: 0.9rem;
     /* レスポンシブベース */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .form-control {
@@ -285,13 +284,13 @@ body::before {
 
 .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #84fab0;
+    box-shadow: 0 0 0 3px rgba(132, 250, 176, 0.3);
     transform: translateY(-1px);
 }
 
 .form-control:hover {
-    border-color: #b8c4ea;
+    border-color: #b8e6c1;
 }
 
 .submit-btn {
@@ -494,14 +493,15 @@ body::before {
 
 .nav-btn.next,
 .nav-btn.submit {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #84fab0, #8fd3f4);
+    color: #2c5530;
+    font-weight: 600;
 }
 
 .nav-btn.next:hover,
 .nav-btn.submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 20px rgba(132, 250, 176, 0.4);
 }
 
 .nav-btn:disabled {
@@ -620,8 +620,8 @@ select.form-control {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #e1e5e9;
-    color: #999;
+    background: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -630,13 +630,16 @@ select.form-control {
     position: relative;
     transition: all 0.3s ease;
     z-index: 2;
+    border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .step.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
     transform: scale(1.1);
     z-index: 3;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
 
 .step.completed {
@@ -718,14 +721,15 @@ select.form-control {
 
 .nav-btn.next,
 .nav-btn.submit {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #84fab0, #8fd3f4);
+    color: #2c5530;
+    font-weight: 600;
 }
 
 .nav-btn.next:hover,
 .nav-btn.submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 20px rgba(132, 250, 176, 0.4);
 }
 
 .nav-btn:disabled {
@@ -795,14 +799,14 @@ select.form-control {
 }
 
 .new-reservation-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #84fab0, #8fd3f4);
+    color: #2c5530;
     border: none;
     border-radius: 12px;
     padding: 1rem 2rem;
     font-size: 1rem;
     /* レスポンシブベース */
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: inherit;
@@ -810,7 +814,7 @@ select.form-control {
 
 .new-reservation-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 20px rgba(132, 250, 176, 0.4);
 }
 
 @media (max-width: 480px) {
