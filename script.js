@@ -374,9 +374,7 @@ async function loadWorkshopParts() {
             throw new Error(data.error || '部の情報取得に失敗しました');
         }
 
-        // 二重ネスト構造に対応
-        const responseData = data.data || data;
-        workshopParts = responseData.parts || [];
+        workshopParts = data.data || [];
 
         console.log('取得した部の情報:', workshopParts); // デバッグ用
         console.log('部の数:', workshopParts.length); // デバッグ用
