@@ -400,7 +400,7 @@ function generateConfirmationContent() {
         </div>
         <div style="background: linear-gradient(135deg, #ffecd2, #fcb69f); border-radius: 12px; padding: 1rem; text-align: center; color: #8b4513; font-size: 0.9rem;">
             <strong>⚠️ 注意事項</strong><br>
-            内容に間違いがないかご確認ください。登録後の変更は管理者にお問い合わせください。
+            内容に間違いがないかご確認ください。登録後の変更は観望会メールアドレス（kanbokaidaisakusen@gmail.com）までお問い合わせください。
         </div>
     `;
 
