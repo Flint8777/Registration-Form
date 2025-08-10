@@ -309,7 +309,16 @@ async function loadWorkshopParts() {
         }
 
         const data = await response.json();
+
+        // APIレスポンスの成功/失敗を確認
+        if (!data.success) {
+            throw new Error(data.error || '部の情報取得に失敗しました');
+        }
+
         workshopParts = data.parts || [];
+
+        console.log('取得した部の情報:', workshopParts); // デバッグ用
+
         updatePartOptions();
         updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
         setLoading(false);
@@ -323,9 +332,14 @@ async function loadWorkshopParts() {
 
 // 参加人数に応じて部の選択肢を更新
 function updatePartOptions() {
-    if (!elements.workshopPart || !elements.participantCount) return;
+    if (!elements.workshopPart || !elements.participantCount) {
+        console.log('updatePartOptions: 必要な要素が見つかりません');
+        return;
+    }
 
     const participantCount = parseInt(elements.participantCount.value) || 0;
+
+    console.log('updatePartOptions: 参加人数:', participantCount, 'workshopParts:', workshopParts);
 
     // 既存のオプションをクリア（最初のdefaultオプション以外）
     while (elements.workshopPart.children.length > 1) {
@@ -336,6 +350,8 @@ function updatePartOptions() {
         let availablePartsCount = 0;
 
         workshopParts.forEach(part => {
+            console.log(`部: ${part.name}, 残席: ${part.remaining}, 参加人数: ${participantCount}`);
+
             const option = document.createElement('option');
             option.value = part.name;
 
@@ -349,6 +365,9 @@ function updatePartOptions() {
                     option.disabled = true;
                 }
                 elements.workshopPart.appendChild(option);
+                console.log(`追加した部: ${part.name}`);
+            } else {
+                console.log(`除外した部: ${part.name} (残席${part.remaining} < 参加人数${participantCount})`);
             }
         });
 
@@ -358,12 +377,14 @@ function updatePartOptions() {
             option.textContent = `${participantCount}人での予約可能な部がありません`;
             option.disabled = true;
             elements.workshopPart.appendChild(option);
+            console.log('利用可能な部がありません');
         }
     } else {
         const option = document.createElement('option');
         option.textContent = '現在予約可能な部がありません';
         option.disabled = true;
         elements.workshopPart.appendChild(option);
+        console.log('workshopPartsが空またはnull');
     }
 
     // 現在選択されている部が利用できなくなった場合、選択をクリア
