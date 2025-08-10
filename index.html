@@ -11,12 +11,12 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body>
-    <div class="loading-overlay" id="loading-overlay">
-        <div class="spinner"></div>
+<body role="main">
+    <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
+        <div class="spinner" role="status" aria-label="読み込み中"></div>
     </div>
 
-    <div class="container">
+    <div class="container" role="application" aria-label="予約システム">
         <div class="header">
             <h1>第5回</h1>
             <img src="https://drive.google.com/thumbnail?id=1cAbcElVcDITaF-m_XIrwMEPuTaZZqH0v&sz=w400" alt="気仙沼星空観望会"
@@ -34,19 +34,20 @@
         </div>
 
         <!-- ステップインジケーター -->
-        <div class="step-indicator">
-            <div class="step active" id="step-1">1</div>
+        <div class="step-indicator" role="progressbar" aria-label="予約手順" aria-valuenow="1" aria-valuemin="1"
+            aria-valuemax="4">
+            <div class="step active" id="step-1" aria-current="step">1</div>
             <div class="step" id="step-2">2</div>
             <div class="step" id="step-3">3</div>
             <div class="step" id="step-4">✓</div>
         </div>
 
         <!-- エラー・成功メッセージ -->
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+        <div id="successMessage" class="success-message" role="status" aria-live="polite"></div>
 
         <!-- ローディング -->
-        <div id="loading" class="loading">
+        <div id="loading" class="loading" role="status" aria-live="polite" aria-hidden="true">
             <div class="spinner"></div>
             <p>処理中…</p>
         </div>
@@ -170,6 +171,9 @@
 
         <div id="result" class="result"></div>
     </div>
+
+    <!-- Hidden elements for screen readers -->
+    <div class="sr-only" aria-live="polite" id="page-announcer"></div>
 
     <script src="script.js"></script>
 </body>

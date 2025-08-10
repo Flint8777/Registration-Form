@@ -1,5 +1,63 @@
 /* 気仙沼星空観望会 予約システム - メインスタイル */
 
+/* アクセシビリティ向上 */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* フォーカス管理 */
+:focus {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* フォーム要素のフォーカス改善 */
+.form-control:focus,
+select:focus,
+button:focus {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* 高コントラスト対応 */
+@media (prefers-contrast: high) {
+
+    .nav-btn.back,
+    .nav-btn.next,
+    .nav-btn.submit {
+        border: 2px solid #000;
+    }
+
+    .step.active {
+        border: 3px solid #000;
+    }
+}
+
+/* 動きを抑制する設定 */
+@media (prefers-reduced-motion: reduce) {
+    .step-content {
+        transition: none;
+    }
+
+    .spinner {
+        animation: none;
+    }
+}
+
+/* アリア属性のスタイリング */
+[aria-hidden="true"] {
+    display: none !important;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -10,7 +68,6 @@ html {
     height: 100%;
     /* レスポンシブフォントサイズの基準設定 */
     font-size: 16px;
-    
     /* デスクトップベース */
     /* iOS Safariでの背景問題に対処 */
     -webkit-background-size: cover;
