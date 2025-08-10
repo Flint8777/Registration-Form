@@ -310,6 +310,8 @@ async function loadWorkshopParts() {
 
         const data = await response.json();
 
+        console.log('APIレスポンス全体:', data); // デバッグ用
+
         // APIレスポンスの成功/失敗を確認
         if (!data.success) {
             throw new Error(data.error || '部の情報取得に失敗しました');
@@ -318,7 +320,9 @@ async function loadWorkshopParts() {
         workshopParts = data.parts || [];
 
         console.log('取得した部の情報:', workshopParts); // デバッグ用
+        console.log('部の数:', workshopParts.length); // デバッグ用
 
+        // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePartOptions();
         updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
         setLoading(false);
@@ -355,21 +359,25 @@ function updatePartOptions() {
             const option = document.createElement('option');
             option.value = part.name;
 
-            // 参加人数が残席数以下の場合のみ表示
-            if (participantCount === 0 || part.remaining >= participantCount) {
-                if (part.remaining > 0) {
-                    option.textContent = `${part.name} （残席: ${part.remaining}席）`;
-                    availablePartsCount++;
-                } else {
-                    option.textContent = `${part.name} （満席）`;
-                    option.disabled = true;
-                }
+            // 参加人数が0の場合は全て表示、それ以外は残席数以上の場合のみ表示
+            const canReserve = (participantCount === 0) || (part.remaining >= participantCount);
+
+            if (canReserve && part.remaining > 0) {
+                option.textContent = `${part.name} （残席: ${part.remaining}席）`;
+                availablePartsCount++;
                 elements.workshopPart.appendChild(option);
                 console.log(`追加した部: ${part.name}`);
+            } else if (canReserve && part.remaining === 0) {
+                option.textContent = `${part.name} （満席）`;
+                option.disabled = true;
+                elements.workshopPart.appendChild(option);
+                console.log(`満席の部を追加: ${part.name}`);
             } else {
                 console.log(`除外した部: ${part.name} (残席${part.remaining} < 参加人数${participantCount})`);
             }
         });
+
+        console.log(`利用可能な部の数: ${availablePartsCount}, 参加人数: ${participantCount}`);
 
         // 利用可能な部がない場合のメッセージ
         if (availablePartsCount === 0 && participantCount > 0) {
@@ -384,7 +392,7 @@ function updatePartOptions() {
         option.textContent = '現在予約可能な部がありません';
         option.disabled = true;
         elements.workshopPart.appendChild(option);
-        console.log('workshopPartsが空またはnull');
+        console.log('workshopPartsが空またはnull:', workshopParts);
     }
 
     // 現在選択されている部が利用できなくなった場合、選択をクリア
@@ -617,8 +625,11 @@ function setupEventListeners() {
 
     // ワークショップ参加人数の選択イベント
     elements.participantCount?.addEventListener('change', function () {
+        console.log('参加人数が変更されました:', this.value);
         if (workshopParts && workshopParts.length > 0) {
             updatePartOptions();
+        } else {
+            console.log('workshopPartsが利用できません:', workshopParts);
         }
     });
 }
