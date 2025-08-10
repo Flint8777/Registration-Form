@@ -355,17 +355,64 @@ function saveCurrentStepData() {
     });
 }
 
+// iframe環境でのJSONP対応
+function fetchWithJsonp(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+
+        // グローバルコールバック関数を作成
+        window[callbackName] = function (data) {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            resolve(data);
+        };
+
+        // スクリプトタグを作成してJSONPリクエスト
+        const script = document.createElement('script');
+        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+        script.onerror = function () {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            reject(new Error('JSONP request failed'));
+        };
+
+        document.body.appendChild(script);
+
+        // タイムアウト処理
+        setTimeout(() => {
+            if (window[callbackName]) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                reject(new Error('JSONP request timeout'));
+            }
+        }, 10000);
+    });
+}
+
 // ワークショップの部情報を取得
 async function loadWorkshopParts() {
     try {
         setLoading(true);
 
-        const response = await fetch(`${CONFIG.API_URL}?action=getParts`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // iframe環境での制限を検知
+        const isIframe = window.self !== window.top;
+        console.log('iframe環境:', isIframe);
 
-        const data = await response.json();
+        let data;
+
+        if (isIframe) {
+            // iframe環境ではJSONPを使用
+            console.log('iframe環境のためJSONPを使用');
+            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getParts`);
+        } else {
+            // 通常環境ではfetchを使用
+            console.log('通常環境のためfetchを使用');
+            const response = await fetch(`${CONFIG.API_URL}?action=getParts`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            data = await response.json();
+        }
 
         console.log('APIレスポンス全体:', data); // デバッグ用
 
@@ -653,8 +700,10 @@ function setupEventListeners() {
     elements.nextBtn?.addEventListener('click', nextStep);
     elements.submitBtn?.addEventListener('click', submitForm);
 
-    // 新規予約ボタン
-    getElement('.new-reservation-btn')?.addEventListener('click', resetForm);
+    // ホームページ遷移ボタン
+    getElement('.new-reservation-btn')?.addEventListener('click', function () {
+        window.location.href = 'https://kesennuma-kanboukai.studio.site/';
+    });
 
     // ワークショップ参加選択の変更監視
     elements.workshopParticipation?.addEventListener('change', function () {

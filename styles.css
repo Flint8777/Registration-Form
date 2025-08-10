@@ -849,11 +849,12 @@ select.form-control {
 }
 
 .completion-message {
-    color: #666;
+    color: #2c3e50;
     line-height: 1.6;
     margin-bottom: 2rem;
     font-size: 1rem;
     /* レスポンシブベース */
+    font-weight: 500;
 }
 
 .new-reservation-btn {
@@ -1074,6 +1075,8 @@ select.form-control {
         font-size: 1rem;
         line-height: 1.5;
         margin-bottom: 1.2rem;
+        color: #2c3e50;
+        font-weight: 500;
     }
 
     .new-reservation-btn {
@@ -1146,6 +1149,8 @@ select.form-control {
 
     .completion-message {
         font-size: 0.95rem;
+        color: #2c3e50;
+        font-weight: 500;
     }
 }
 
@@ -1222,6 +1227,8 @@ select.form-control {
 
     .completion-message {
         font-size: 1.05rem;
+        color: #2c3e50;
+        font-weight: 500;
     }
 
     .new-reservation-btn {
