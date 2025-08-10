@@ -1,5 +1,45 @@
 // 気仙沼星空観望会 予約システム - メインスクリプト
 
+// アクセシビリティ管理クラス
+class AccessibilityManager {
+    static announcePageChange(stepNumber) {
+        const announcer = document.getElementById('page-announcer');
+        if (announcer) {
+            announcer.textContent = `ステップ ${stepNumber} に移動しました`;
+        }
+    }
+
+    static updateProgressBar(current, total) {
+        const progressBar = document.querySelector('.step-indicator[role="progressbar"]');
+        if (progressBar) {
+            progressBar.setAttribute('aria-valuenow', current);
+            progressBar.setAttribute('aria-valuetext', `${current} / ${total} ステップ完了`);
+        }
+    }
+
+    static setFocusToElement(elementId) {
+        setTimeout(() => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.focus();
+            }
+        }, 100);
+    }
+
+    static manageAriaHidden() {
+        // aria-hidden要素のフォーカス管理
+        const hiddenElements = document.querySelectorAll('[aria-hidden="true"]');
+        hiddenElements.forEach(element => {
+            const focusableElements = element.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            focusableElements.forEach(focusable => {
+                focusable.setAttribute('tabindex', '-1');
+            });
+        });
+    }
+}
+
 // 定数定義（DRY原則適用）
 const CONFIG = {
     API_URL: 'https://script.google.com/macros/s/***REMOVED***/exec',
@@ -142,6 +182,10 @@ function validateEmail(email) {
 
 // ステップ更新
 function updateStep(step) {
+    // アクセシビリティ管理
+    AccessibilityManager.announcePageChange(step);
+    AccessibilityManager.updateProgressBar(step, CONFIG.STEPS.COMPLETION);
+
     // ステップインジケーター更新
     for (let i = 1; i <= CONFIG.STEPS.COMPLETION; i++) {
         const stepElement = getElement(`#step-${i}`);
@@ -153,12 +197,25 @@ function updateStep(step) {
 
             if (i < step) {
                 stepElement.classList.add(CONFIG.CLASSES.COMPLETED);
+                stepElement.removeAttribute('aria-current');
             } else if (i === step) {
                 stepElement.classList.add(CONFIG.CLASSES.ACTIVE);
+                stepElement.setAttribute('aria-current', 'step');
                 contentElement.classList.add(CONFIG.CLASSES.ACTIVE);
+
+                // アクティブなステップの最初のフォーカス可能要素にフォーカス
+                const firstInput = contentElement.querySelector('input, select, textarea, button');
+                if (firstInput) {
+                    AccessibilityManager.setFocusToElement(firstInput.id || firstInput.name);
+                }
+            } else {
+                stepElement.removeAttribute('aria-current');
             }
         }
     }
+
+    // aria-hidden管理
+    AccessibilityManager.manageAriaHidden();
 
     // ナビゲーションボタン更新
     updateNavigationButtons(step);
@@ -683,6 +740,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ローディング状態を初期化（非表示に）
     setLoading(false);
+
+    // アクセシビリティ管理を初期化
+    AccessibilityManager.manageAriaHidden();
 
     updateStep(CONFIG.STEPS.BASIC_INFO);
 
