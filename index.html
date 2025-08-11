@@ -92,6 +92,42 @@
                     <div class="email-validation-message" id="email-validation-message"></div>
                 </div>
 
+                <!-- 追加: 当日の交通手段 -->
+                <div class="form-group">
+                    <label for="当日の交通手段">🛣 当日の交通手段（ご自宅・宿から会場まで）</label>
+                    <div class="select-wrapper">
+                        <select id="当日の交通手段" name="当日の交通手段" class="form-control" required>
+                            <option value="">選択してください</option>
+                            <option value="車">車</option>
+                            <option value="徒歩">徒歩</option>
+                            <option value="自転車">自転車</option>
+                            <option value="バス">バス</option>
+                            <option value="タクシー">タクシー</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 追加: お車で来場の場合の台数（条件付き表示） -->
+                <div class="form-group conditional-field" id="car-count-group" aria-hidden="true">
+                    <label for="お車台数">🚗 (お車で来場の場合) 何台でお越しになりますか？</label>
+                    <div class="select-wrapper">
+                        <select id="お車台数" name="お車台数" class="form-control">
+                            <option value="">台数を選択してください</option>
+                            <option value="1">1台</option>
+                            <option value="2">2台</option>
+                            <option value="3">3台</option>
+                            <option value="4">4台</option>
+                            <option value="5">5台</option>
+                            <option value="6">6台</option>
+                            <option value="7">7台</option>
+                            <option value="8">8台</option>
+                            <option value="9">9台</option>
+                            <option value="10">10台</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="ワークショップ参加">✂ ワークショップ（月齢キーホルダー作り）に参加されますか？</label>
                     <select id="ワークショップ参加" name="ワークショップ参加" class="form-control" required>

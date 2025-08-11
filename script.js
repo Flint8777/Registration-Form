@@ -69,7 +69,10 @@ const CONFIG = {
         PARTICIPANT_COUNT: '#ワークショップ参加人数',
         WORKSHOP_PART: '#予約する部',
         WORKSHOP_PARTICIPATION: '#ワークショップ参加',
-        CONFIRMATION_CONTENT: '#confirmation-content'
+        CONFIRMATION_CONTENT: '#confirmation-content',
+        TRANSPORT_MODE: '#当日の交通手段',
+        CAR_COUNT_GROUP: '#car-count-group',
+        CAR_COUNT: '#お車台数'
     },
     CLASSES: {
         ACTIVE: 'active',
@@ -116,7 +119,10 @@ function initializeElements() {
         participantCount: getElement(CONFIG.SELECTORS.PARTICIPANT_COUNT),
         workshopPart: getElement(CONFIG.SELECTORS.WORKSHOP_PART),
         workshopParticipation: getElement(CONFIG.SELECTORS.WORKSHOP_PARTICIPATION),
-        confirmationContent: getElement(CONFIG.SELECTORS.CONFIRMATION_CONTENT)
+        confirmationContent: getElement(CONFIG.SELECTORS.CONFIRMATION_CONTENT),
+        transportMode: getElement(CONFIG.SELECTORS.TRANSPORT_MODE),
+        carCountGroup: getElement(CONFIG.SELECTORS.CAR_COUNT_GROUP),
+        carCount: getElement(CONFIG.SELECTORS.CAR_COUNT)
     };
 }
 
@@ -401,6 +407,20 @@ function validateCurrentStep() {
         }
     }
 
+    // ステップ1の追加バリデーション（交通手段と車台数）
+    if (currentStep === CONFIG.STEPS.BASIC_INFO) {
+        const transport = elements.transportMode?.value || '';
+        if (transport === '車') {
+            const carCountValue = elements.carCount?.value?.trim();
+            const carCountNum = parseInt(carCountValue, 10);
+            if (!carCountValue || isNaN(carCountNum) || carCountNum < 1) {
+                elements.carCount?.focus();
+                showResult('お車の台数を1台以上で入力してください。', false);
+                return false;
+            }
+        }
+    }
+
     // ステップ2の追加バリデーション
     if (currentStep === 2) {
         const participantCount = document.getElementById('ワークショップ参加人数').value;
@@ -430,6 +450,18 @@ function saveCurrentStepData() {
             formData[input.name] = input.value;
         }
     });
+
+    // ステップ1の条件付きデータ調整
+    if (currentStep === CONFIG.STEPS.BASIC_INFO) {
+        const transport = elements.transportMode?.value || '';
+        formData['当日の交通手段'] = transport;
+        if (transport === '車') {
+            formData['お車台数'] = elements.carCount?.value?.trim() || '';
+        } else {
+            delete formData['お車台数'];
+            if (elements.carCount) elements.carCount.value = '';
+        }
+    }
 }
 
 // iframe環境でのJSONP対応
@@ -596,6 +628,8 @@ function generateConfirmationContent() {
                 <div><strong>代表者氏名:</strong> ${formData['代表者氏名'] || ''}</div>
                 <div><strong>来場地域:</strong> ${formData['来場地域'] || ''}</div>
                 <div><strong>メールアドレス:</strong> ${formData['メールアドレス'] || ''}</div>
+                <div><strong>当日の交通手段:</strong> ${formData['当日の交通手段'] || ''}</div>
+                ${formData['当日の交通手段'] === '車' ? `<div><strong>お車台数:</strong> ${formData['お車台数'] || ''}台</div>` : ''}
                 <div><strong>ワークショップ参加:</strong> ${formData['ワークショップ参加'] || ''}</div>
     `;
 
@@ -816,6 +850,29 @@ function setupEventListeners() {
             console.log('workshopPartsが利用できません:', workshopParts);
         }
     });
+
+    // 交通手段の変更で台数フィールドの表示切替
+    elements.transportMode?.addEventListener('change', function () {
+        const isCar = this.value === '車';
+        if (elements.carCountGroup) {
+            elements.carCountGroup.classList.toggle('show', isCar);
+            elements.carCountGroup.setAttribute('aria-hidden', isCar ? 'false' : 'true');
+        }
+        if (elements.carCount) {
+            if (isCar) {
+                elements.carCount.setAttribute('required', 'required');
+            } else {
+                elements.carCount.removeAttribute('required');
+                elements.carCount.value = '';
+                delete formData['お車台数'];
+            }
+        }
+    });
+
+    // 初期表示時にも現在の選択状態を反映
+    if (elements.transportMode) {
+        elements.transportMode.dispatchEvent(new Event('change'));
+    }
 }
 
 // メールアドレスバリデーションの設定
