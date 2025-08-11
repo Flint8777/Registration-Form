@@ -1141,16 +1141,6 @@ function setupEventListeners() {
         await submitForm();
     });
 
-    // 右上のiframe閉じるボタン
-    getElement('.close-iframe-top-btn')?.addEventListener('click', function () {
-        closeIframe();
-    });
-
-    // iframe閉じるボタン（完了画面）
-    getElement('.close-iframe-btn')?.addEventListener('click', function () {
-        closeIframe();
-    });
-
     // ワークショップ参加選択の変更監視
     elements.workshopParticipation?.addEventListener('change', function () {
         const participationValue = this.value;
@@ -1445,20 +1435,6 @@ function updateWorkshopParticipantOptions() {
 document.addEventListener('DOMContentLoaded', () => {
     // UIエレメントを初期化
     initializeElements();
-
-    // iframe環境の検出と右上バツボタンの表示制御
-    const closeTopBtn = getElement('.close-iframe-top-btn');
-    if (closeTopBtn) {
-        if (window.self !== window.top) {
-            // iframe内で実行されている場合はボタンを表示
-            closeTopBtn.classList.remove('hidden');
-            console.log('iframe環境を検出：右上閉じるボタンを表示');
-        } else {
-            // 通常ウィンドウの場合はボタンを非表示
-            closeTopBtn.classList.add('hidden');
-            console.log('通常ウィンドウ環境：右上閉じるボタンを非表示');
-        }
-    }
 
     // 来場人数のオプションを生成
     initializeAttendanceCount();
