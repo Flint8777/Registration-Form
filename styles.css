@@ -568,6 +568,7 @@ body::before {
 
 .select-wrapper {
     position: relative;
+    display: block;
 }
 
 .select-wrapper::after {
@@ -580,6 +581,11 @@ body::before {
     color: #667eea;
     font-size: 0.8rem;
     transition: transform 0.3s ease;
+    z-index: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .select-wrapper:hover::after {
@@ -592,6 +598,33 @@ select.form-control {
     -moz-appearance: none;
     background-image: none;
     cursor: pointer;
+    position: relative;
+    z-index: 2;
+    padding-right: 3rem;
+    /* ドロップダウンアイコンとの重複を避ける */
+    /* モバイル対応のタッチ領域拡大 */
+    min-height: 44px;
+    /* iOSガイドライン推奨の最小タッチ領域 */
+    -webkit-tap-highlight-color: transparent;
+    /* タップハイライトを無効化 */
+    touch-action: manipulation;
+    /* タッチ動作を最適化 */
+}
+
+/* モバイル専用のselect要素修正 */
+@media (max-width: 768px) {
+    select.form-control {
+        font-size: 16px;
+        /* iOSでのズーム防止 */
+        padding: 0.875rem 3rem 0.875rem 0.875rem;
+        /* より大きなタッチ領域 */
+    }
+
+    .select-wrapper::after {
+        font-size: 1rem;
+        /* アイコンをやや大きく */
+        right: 0.875rem;
+    }
 }
 
 .info-card {
