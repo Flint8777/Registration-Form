@@ -796,6 +796,30 @@ select.form-control {
     transform: none;
 }
 
+.nav-btn.loading {
+    cursor: wait;
+    opacity: 0.8;
+}
+
+/* ローディングスピナー */
+.spinner {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 2px solid currentColor;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 /* 条件付きフィールド */
 .conditional-field {
     opacity: 0;

@@ -65,6 +65,7 @@ const CONFIG = {
         SUBMIT_BTN: '#submit-btn',
         EMAIL_INPUT: '#メールアドレス',
         EMAIL_VALIDATION: '#email-validation-message',
+        ATTENDANCE_COUNT: '#来場人数',
         PARTICIPANT_COUNT: '#ワークショップ参加人数',
         WORKSHOP_PART: '#予約する部',
         WORKSHOP_PARTICIPATION: '#ワークショップ参加',
@@ -111,6 +112,7 @@ function initializeElements() {
         submitBtn: getElement(CONFIG.SELECTORS.SUBMIT_BTN),
         emailInput: getElement(CONFIG.SELECTORS.EMAIL_INPUT),
         emailValidation: getElement(CONFIG.SELECTORS.EMAIL_VALIDATION),
+        attendanceCount: getElement(CONFIG.SELECTORS.ATTENDANCE_COUNT),
         participantCount: getElement(CONFIG.SELECTORS.PARTICIPANT_COUNT),
         workshopPart: getElement(CONFIG.SELECTORS.WORKSHOP_PART),
         workshopParticipation: getElement(CONFIG.SELECTORS.WORKSHOP_PARTICIPATION),
@@ -271,8 +273,83 @@ function previousStep() {
     }
 }
 
+// ボタンのローディング状態を設定
+function setButtonLoading(button, isLoading, originalText = null) {
+    if (!button) return;
+
+    if (isLoading) {
+        // ローディング状態を開始
+        button.disabled = true;
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.textContent;
+        }
+        button.innerHTML = `
+            <span class="spinner" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;"></span>
+            処理中...
+        `;
+        button.classList.add('loading');
+    } else {
+        // ローディング状態を終了
+        button.disabled = false;
+        button.textContent = originalText || button.dataset.originalText || '次へ →';
+        button.classList.remove('loading');
+        delete button.dataset.originalText;
+    }
+}
+
+// 次のステップへ（ローディング機能付き）
+async function nextStep() {
+    if (!validateCurrentStep()) return;
+
+    // 次へボタンをローディング状態に
+    setButtonLoading(elements.nextBtn, true);
+
+    try {
+        saveCurrentStepData();
+
+        // ステップ1からの分岐処理
+        if (currentStep === CONFIG.STEPS.BASIC_INFO) {
+            const workshopParticipation = elements.workshopParticipation?.value;
+
+            if (workshopParticipation === '参加しない') {
+                // 少し待機してからステップ遷移
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateStep(CONFIG.STEPS.CONFIRMATION);
+                generateConfirmationContent();
+                setButtonLoading(elements.nextBtn, false);
+                return;
+            } else {
+                // ワークショップデータ読み込み時はloadWorkshopParts内でローディング管理
+                await loadWorkshopParts();
+                setButtonLoading(elements.nextBtn, false);
+                return;
+            }
+        }
+
+        // ステップ2から3への移行
+        if (currentStep === CONFIG.STEPS.WORKSHOP_DETAILS) {
+            // 少し待機してからステップ遷移
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateStep(CONFIG.STEPS.CONFIRMATION);
+            generateConfirmationContent();
+            setButtonLoading(elements.nextBtn, false);
+            return;
+        }
+
+        // その他のステップ遷移
+        await new Promise(resolve => setTimeout(resolve, 300));
+        updateStep(currentStep + 1);
+        setButtonLoading(elements.nextBtn, false);
+
+    } catch (error) {
+        console.error('ステップ遷移エラー:', error);
+        setButtonLoading(elements.nextBtn, false);
+        showResult('処理中にエラーが発生しました。もう一度お試しください。', false);
+    }
+}
+
 // 次のステップへ
-function nextStep() {
+function nextStep_old() {
     if (validateCurrentStep()) {
         saveCurrentStepData();
 
@@ -515,6 +592,7 @@ function generateConfirmationContent() {
         <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
             <h4 style="margin-bottom: 1rem; color: #333;">📋 登録内容</h4>
             <div style="display: grid; gap: 0.5rem;">
+                <div><strong>来場人数:</strong> ${formData['来場人数'] || ''}人</div>
                 <div><strong>代表者氏名:</strong> ${formData['代表者氏名'] || ''}</div>
                 <div><strong>来場地域:</strong> ${formData['来場地域'] || ''}</div>
                 <div><strong>メールアドレス:</strong> ${formData['メールアドレス'] || ''}</div>
@@ -779,10 +857,27 @@ function setupEmailValidation() {
     });
 }
 
+// 来場人数のオプションを生成
+function initializeAttendanceCount() {
+    const attendanceSelect = document.getElementById('来場人数');
+    if (attendanceSelect) {
+        // 1～100人のオプションを生成
+        for (let i = 1; i <= 100; i++) {
+            const option = document.createElement('option');
+            option.value = i.toString();
+            option.textContent = `${i}人`;
+            attendanceSelect.appendChild(option);
+        }
+    }
+}
+
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
     // UIエレメントを初期化
     initializeElements();
+
+    // 来場人数のオプションを生成
+    initializeAttendanceCount();
 
     // イベントリスナーを設定
     setupEventListeners();
