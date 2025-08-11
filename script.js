@@ -593,14 +593,25 @@ async function loadWorkshopParts() {
 
         let data;
 
+        // キャッシュ回避のためタイムスタンプを追加
+        const timestamp = new Date().getTime();
+        const apiUrl = `${CONFIG.API_URL}?action=getParts&t=${timestamp}`;
+
         if (isIframe) {
             // iframe環境ではJSONPを使用
             console.log('iframe環境のためJSONPを使用');
-            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getParts`);
+            data = await fetchWithJsonp(apiUrl);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const response = await fetch(`${CONFIG.API_URL}?action=getParts`);
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                cache: 'no-cache', // キャッシュを無効化
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -618,6 +629,11 @@ async function loadWorkshopParts() {
 
         console.log('取得した部の情報:', workshopParts); // デバッグ用
         console.log('部の数:', workshopParts.length); // デバッグ用
+
+        // 残席数の詳細ログ出力
+        workshopParts.forEach(part => {
+            console.log(`🎯 ${part.name}: 定員${part.capacity}席, 予約済み${part.reserved}席, 残席${part.remaining}席`);
+        });
 
         // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePartOptions();
