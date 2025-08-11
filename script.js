@@ -1060,27 +1060,36 @@ function setupEventListeners() {
     setupEmailValidation();
 
     // ワークショップ参加人数の選択イベント
-    elements.participantCount?.addEventListener('change', function () {
-        console.log('参加人数が変更されました:', this.value);
-        if (workshopParts && workshopParts.length > 0) {
-            updatePartOptions();
-        } else {
-            console.log('workshopPartsが利用できません:', workshopParts);
-        }
+    elements.participantCount?.addEventListener('change', function (event) {
+        event.stopPropagation(); // イベントの伝播を停止
+
+        setTimeout(() => {
+            console.log('参加人数が変更されました:', this.value);
+            if (workshopParts && workshopParts.length > 0) {
+                updatePartOptions();
+            } else {
+                console.log('workshopPartsが利用できません:', workshopParts);
+            }
+        }, 50); // 50ms遅延で実行
     });
 
     // プラネタリウム参加人数の選択イベント
-    elements.planetariumParticipantCount?.addEventListener('change', function () {
-        console.log('プラネタリウム参加人数が変更されました:', this.value);
-        if (planetariumParts && planetariumParts.length > 0) {
-            updatePlanetariumPartOptions();
-        } else {
-            console.log('planetariumPartsが利用できません:', planetariumParts);
-        }
+    elements.planetariumParticipantCount?.addEventListener('change', function (event) {
+        event.stopPropagation(); // イベントの伝播を停止
+
+        setTimeout(() => {
+            console.log('プラネタリウム参加人数が変更されました:', this.value);
+            if (planetariumParts && planetariumParts.length > 0) {
+                updatePlanetariumPartOptions();
+            } else {
+                console.log('planetariumPartsが利用できません:', planetariumParts);
+            }
+        }, 50); // 50ms遅延で実行
     });
 
     // 交通手段の変更で台数フィールドの表示切替
-    elements.transportMode?.addEventListener('change', function () {
+    elements.transportMode?.addEventListener('change', function (event) {
+        event.stopPropagation(); // イベントの伝播を停止
         const isCar = this.value === '車';
         if (elements.carCountGroup) {
             elements.carCountGroup.classList.toggle('show', isCar);
@@ -1098,7 +1107,8 @@ function setupEventListeners() {
     });
 
     // ワークショップ参加の表示制御（ステップ2のセクション）
-    elements.workshopParticipation?.addEventListener('change', function () {
+    elements.workshopParticipation?.addEventListener('change', function (event) {
+        event.stopPropagation(); // イベントの伝播を停止
         const isJoin = this.value === '参加する';
         const workshopSection = document.getElementById('workshop-section');
         if (workshopSection) {
@@ -1124,7 +1134,8 @@ function setupEventListeners() {
     });
 
     // プラネタリウム鑑賞の表示制御
-    elements.planetariumIntent?.addEventListener('change', function () {
+    elements.planetariumIntent?.addEventListener('change', function (event) {
+        event.stopPropagation(); // イベントの伝播を停止
         const isYes = this.value === 'はい';
         const section = document.getElementById('planetarium-section');
         if (section) {
