@@ -706,6 +706,7 @@ select.form-control {
     z-index: 2;
 }
 
+/* 横棒を非表示
 .step+.step::before {
     content: '';
     position: absolute;
@@ -723,6 +724,7 @@ select.form-control {
 .step.active+.step::before {
     background: linear-gradient(135deg, #667eea, #764ba2);
 }
+*/
 
 /* ステップコンテンツ */
 .step-content {
@@ -1051,10 +1053,12 @@ select.form-control {
         font-size: 0.85rem;
     }
 
+    /* 横棒を非表示
     .step+.step::before {
         width: 12px;
         left: -18px;
     }
+    */
 
     .step-navigation {
         flex-direction: column;
@@ -1240,10 +1244,12 @@ select.form-control {
         font-size: 1rem;
     }
 
+    /* 横棒を非表示
     .step+.step::before {
         width: 25px;
         left: -35px;
     }
+    */
 
     .completion-title {
         font-size: 1.8rem;
