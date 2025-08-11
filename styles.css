@@ -825,6 +825,20 @@ select.form-control {
 .nav-btn.loading {
     cursor: wait;
     opacity: 0.8;
+    position: relative;
+}
+
+/* submitボタンのローディング状態での特別スタイル */
+.nav-btn.submit.loading {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transform: translateY(1px);
+}
+
+/* ローディング中のボタン内スピナー */
+.nav-btn.loading .spinner {
+    animation: spin 1s linear infinite;
 }
 
 /* ローディングスピナー */

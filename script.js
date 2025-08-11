@@ -326,12 +326,24 @@ function setButtonLoading(button, isLoading, originalText = null) {
             処理中...
         `;
         button.classList.add('loading');
+
+        // 他のナビゲーションボタンも無効化（submitボタンの場合）
+        if (button === elements.submitBtn) {
+            if (elements.backBtn) elements.backBtn.disabled = true;
+            if (elements.nextBtn) elements.nextBtn.disabled = true;
+        }
     } else {
         // ローディング状態を終了
         button.disabled = false;
         button.textContent = originalText || button.dataset.originalText || '次へ →';
         button.classList.remove('loading');
         delete button.dataset.originalText;
+
+        // 他のナビゲーションボタンも有効化（submitボタンの場合）
+        if (button === elements.submitBtn) {
+            if (elements.backBtn) elements.backBtn.disabled = false;
+            if (elements.nextBtn) elements.nextBtn.disabled = false;
+        }
     }
 }
 
@@ -348,18 +360,28 @@ async function nextStep() {
             const workshopParticipation = elements.workshopParticipation?.value;
             const planetariumIntent = elements.planetariumIntent?.value;
 
+            console.log('Step 1からの遷移:', {
+                workshop: workshopParticipation,
+                planetarium: planetariumIntent
+            });
+
+            // 両方選択されている場合はワークショップから開始
             if (workshopParticipation === '参加する') {
+                console.log('ワークショップStep 2へ遷移（プラネタリウム意向:', planetariumIntent, '）');
                 await loadWorkshopParts(); // 内部でStep2へ遷移
                 setButtonLoading(elements.nextBtn, false);
                 return;
             }
+            // ワークショップ不参加でプラネタリウムのみの場合
             if (planetariumIntent === 'はい') {
+                console.log('プラネタリウムのみでStep 3へ遷移');
                 await loadPlanetariumParts(); // プラネタリウム部情報取得
                 updateStep(CONFIG.STEPS.PLANETARIUM_DETAILS);
                 setButtonLoading(elements.nextBtn, false);
                 return;
             }
             // どちらも不要なら送信
+            console.log('両方不要のため直接送信');
             setButtonLoading(elements.nextBtn, false);
             await submitForm();
             return;
@@ -367,13 +389,23 @@ async function nextStep() {
 
         if (currentStep === CONFIG.STEPS.WORKSHOP_DETAILS) {
             // Step 1で保存されたプラネタリウム意向を確認
+            console.log('Step 2からの遷移チェック:', {
+                formData: formData,
+                planetariumFromFormData: formData['プラネタリウム鑑賞'],
+                planetariumFromElement: elements.planetariumIntent?.value
+            });
+
             const planetariumIntent = formData['プラネタリウム鑑賞'] || elements.planetariumIntent?.value;
+            console.log('決定されたプラネタリウム意向:', planetariumIntent);
+
             if (planetariumIntent === 'はい') {
+                console.log('プラネタリウムStep 3へ遷移');
                 await loadPlanetariumParts(); // プラネタリウム部情報取得
                 updateStep(CONFIG.STEPS.PLANETARIUM_DETAILS);
                 setButtonLoading(elements.nextBtn, false);
                 return;
             }
+            console.log('プラネタリウム不要のため送信');
             setButtonLoading(elements.nextBtn, false);
             await submitForm();
             return;
@@ -637,6 +669,8 @@ async function loadWorkshopParts() {
 
         // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePartOptions();
+        // ワークショップ参加人数の選択肢を来場人数に基づいて制限
+        updateWorkshopParticipantOptions();
         updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
         setLoading(false);
 
@@ -686,6 +720,8 @@ async function loadPlanetariumParts() {
 
         // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePlanetariumPartOptions();
+        // プラネタリウム参加人数を来場人数に基づいて再生成
+        initializePlanetariumCount();
         setLoading(false);
 
     } catch (error) {
@@ -700,6 +736,8 @@ async function loadPlanetariumParts() {
         ];
 
         updatePlanetariumPartOptions();
+        // プラネタリウム参加人数を来場人数に基づいて再生成
+        initializePlanetariumCount();
         setLoading(false);
     }
 }
@@ -891,6 +929,9 @@ async function submitForm() {
     try {
         setLoading(true);
 
+        // submitボタンのローディング状態を開始
+        setButtonLoading(elements.submitBtn, true, '🎯 登録完了');
+
         // FormDataを作成
         const formDataForSubmit = new FormData();
         Object.keys(formData).forEach(key => {
@@ -904,10 +945,10 @@ async function submitForm() {
         document.body.appendChild(iframe);
 
         // 動的フォームを作成
-        const submitForm = document.createElement('form');
-        submitForm.method = 'POST';
-        submitForm.action = CONFIG.API_URL;
-        submitForm.target = 'submitFrame';
+        const submitFormElement = document.createElement('form');
+        submitFormElement.method = 'POST';
+        submitFormElement.action = CONFIG.API_URL;
+        submitFormElement.target = 'submitFrame';
 
         // フォームデータを追加
         Object.keys(formData).forEach(key => {
@@ -915,10 +956,10 @@ async function submitForm() {
             input.type = 'hidden';
             input.name = key;
             input.value = formData[key];
-            submitForm.appendChild(input);
+            submitFormElement.appendChild(input);
         });
 
-        document.body.appendChild(submitForm);
+        document.body.appendChild(submitFormElement);
 
         // iframe読み込み完了時の処理
         iframe.onload = function () {
@@ -929,24 +970,36 @@ async function submitForm() {
                     showResult('予約が正常に送信されました！', true);
 
                     // フォームとiframeを削除
-                    document.body.removeChild(submitForm);
+                    document.body.removeChild(submitFormElement);
                     document.body.removeChild(iframe);
 
+                    // ローディング状態を終了
                     setLoading(false);
+                    setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
                 } catch (error) {
                     console.error('送信完了処理エラー:', error);
                     setLoading(false);
+                    setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
                 }
             }, 1000);
         };
 
+        // iframe エラー処理
+        iframe.onerror = function () {
+            console.error('iframe読み込みエラー');
+            setLoading(false);
+            setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
+            showResult('送信処理でエラーが発生しました。もう一度お試しください。', false);
+        };
+
         // フォーム送信
-        submitForm.submit();
+        submitFormElement.submit();
 
     } catch (error) {
         console.error('登録送信エラー:', error);
         showResult('登録の送信に失敗しました。もう一度お試しください。', false);
         setLoading(false);
+        setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
     }
 }
 
@@ -1044,7 +1097,22 @@ function setupEventListeners() {
     // ナビゲーションボタンのイベント
     elements.backBtn?.addEventListener('click', previousStep);
     elements.nextBtn?.addEventListener('click', nextStep);
-    elements.submitBtn?.addEventListener('click', submitForm);
+
+    // submitボタンのイベント（ローディング状態管理付き）
+    elements.submitBtn?.addEventListener('click', async function (event) {
+        event.preventDefault(); // デフォルトの送信を防止
+
+        // バリデーションチェック
+        if (!validateCurrentStep()) {
+            return;
+        }
+
+        // データ保存
+        saveCurrentStepData();
+
+        // submitForm関数を呼び出し（内部でローディング管理される）
+        await submitForm();
+    });
 
     // ホームページ遷移ボタン
     getElement('.new-reservation-btn')?.addEventListener('click', function () {
@@ -1074,6 +1142,35 @@ function setupEventListeners() {
 
     // メールアドレスのリアルタイムバリデーション
     setupEmailValidation();
+
+    // 来場人数の変更監視（ワークショップとプラネタリウムの参加人数選択肢を更新）
+    elements.attendanceCount?.addEventListener('change', function () {
+        const newAttendance = parseInt(this.value || 0);
+        console.log(`来場人数が変更されました: ${newAttendance}人`);
+
+        // Step 2（ワークショップ）がアクティブな場合、参加人数選択肢を更新
+        if (currentStep === CONFIG.STEPS.WORKSHOP_DETAILS) {
+            updateWorkshopParticipantOptions();
+        }
+
+        // Step 3（プラネタリウム）がアクティブな場合、参加人数選択肢を再生成
+        if (currentStep === CONFIG.STEPS.PLANETARIUM_DETAILS) {
+            const pSelect = document.getElementById('プラネタリウム参加人数');
+            if (pSelect) {
+                // 現在の選択を保持
+                const currentValue = pSelect.value;
+                // オプションをクリアして再生成
+                while (pSelect.children.length > 1) {
+                    pSelect.removeChild(pSelect.lastChild);
+                }
+                initializePlanetariumCount();
+                // 可能であれば以前の選択を復元
+                if (currentValue && parseInt(currentValue) <= newAttendance) {
+                    pSelect.value = currentValue;
+                }
+            }
+        }
+    });
 
     // ワークショップ参加人数の選択イベント
     elements.participantCount?.addEventListener('change', function (event) {
@@ -1240,19 +1337,75 @@ function initializeAttendanceCount() {
     }
 }
 
-// プラネタリウム参加人数のオプションを生成（1～30）
+// プラネタリウム参加人数のオプションを生成（1～30、ただし来場人数以下に制限）
 function initializePlanetariumCount() {
     const pSelect = document.getElementById('プラネタリウム参加人数');
     if (!pSelect) return;
 
-    // すでに埋まっている場合はスキップ（placeholder以外の要素があれば）
-    if (pSelect.options.length > 1) return;
+    // 来場人数を取得
+    const totalAttendance = parseInt(formData['来場人数'] || elements.attendanceCount?.value || 0);
+    const maxCount = totalAttendance > 0 ? Math.min(totalAttendance, 30) : 30;
 
-    for (let i = 1; i <= 30; i++) {
+    console.log(`プラネタリウム参加人数の選択肢を生成: 最大${maxCount}人（来場人数: ${totalAttendance}人）`);
+
+    // 現在の選択を保持
+    const currentValue = pSelect.value;
+
+    // 既存のオプションをクリア（placeholder以外）
+    while (pSelect.children.length > 1) {
+        pSelect.removeChild(pSelect.lastChild);
+    }
+
+    for (let i = 1; i <= maxCount; i++) {
         const option = document.createElement('option');
         option.value = i.toString();
         option.textContent = `${i}人`;
         pSelect.appendChild(option);
+    }
+
+    // 可能であれば以前の選択を復元、不可能な場合はリセット
+    if (currentValue && parseInt(currentValue) <= maxCount) {
+        pSelect.value = currentValue;
+    } else if (currentValue && totalAttendance > 0) {
+        pSelect.value = '';
+        console.log(`プラネタリウム参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
+    }
+}
+
+// ワークショップ参加人数のオプションを来場人数に基づいて制限
+function updateWorkshopParticipantOptions() {
+    const wsSelect = document.getElementById('ワークショップ参加人数');
+    if (!wsSelect) return;
+
+    // 来場人数を取得
+    const totalAttendance = parseInt(formData['来場人数'] || elements.attendanceCount?.value || 0);
+
+    console.log(`ワークショップ参加人数の選択肢を更新: 来場人数${totalAttendance}人に基づいて制限`);
+
+    // 既存のオプションを確認して制限
+    const options = wsSelect.querySelectorAll('option');
+    options.forEach(option => {
+        if (option.value && option.value !== '') {
+            const optionValue = parseInt(option.value);
+            if (totalAttendance > 0 && optionValue > totalAttendance) {
+                option.disabled = true;
+                option.textContent = `${optionValue}人（来場人数を超過）`;
+                option.style.color = '#999';
+            } else {
+                option.disabled = false;
+                option.textContent = `${optionValue}人`;
+                option.style.color = '';
+            }
+        }
+    });
+
+    // 現在選択されている値が制限を超えている場合はリセット
+    if (wsSelect.value && totalAttendance > 0) {
+        const currentValue = parseInt(wsSelect.value);
+        if (currentValue > totalAttendance) {
+            wsSelect.value = '';
+            console.log(`ワークショップ参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
+        }
     }
 }
 
