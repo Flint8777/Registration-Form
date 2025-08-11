@@ -93,6 +93,33 @@ let formData = {};
 let workshopParts = [];
 let planetariumParts = [];
 
+// iframe閉じる共通関数
+function closeIframe() {
+    // iframe環境かどうかを確認
+    if (window.self !== window.top) {
+        // iframe内で実行されている場合
+        try {
+            // 親ウィンドウにメッセージを送信（iframe閉じる要求）
+            window.parent.postMessage({ type: 'closeIframe' }, '*');
+            console.log('親ウィンドウにiframe閉じる要求を送信しました');
+        } catch (error) {
+            console.error('親ウィンドウへの通信エラー:', error);
+            // フォールバック：可能であれば親ウィンドウを操作
+            try {
+                window.parent.close();
+            } catch (closeError) {
+                console.error('ウィンドウクローズエラー:', closeError);
+                alert('画面を手動で閉じてください');
+            }
+        }
+    } else {
+        // 通常のウィンドウで実行されている場合
+        if (confirm('画面を閉じますか？')) {
+            window.close();
+        }
+    }
+}
+
 // UIエレメント（DOMContentLoaded後に初期化）
 let elements = {};
 
@@ -1114,9 +1141,14 @@ function setupEventListeners() {
         await submitForm();
     });
 
-    // ホームページ遷移ボタン
-    getElement('.new-reservation-btn')?.addEventListener('click', function () {
-        window.location.href = 'https://kesennuma-kanboukai.studio.site/';
+    // 右上のiframe閉じるボタン
+    getElement('.close-iframe-top-btn')?.addEventListener('click', function () {
+        closeIframe();
+    });
+
+    // iframe閉じるボタン（完了画面）
+    getElement('.close-iframe-btn')?.addEventListener('click', function () {
+        closeIframe();
     });
 
     // ワークショップ参加選択の変更監視
@@ -1413,6 +1445,20 @@ function updateWorkshopParticipantOptions() {
 document.addEventListener('DOMContentLoaded', () => {
     // UIエレメントを初期化
     initializeElements();
+
+    // iframe環境の検出と右上バツボタンの表示制御
+    const closeTopBtn = getElement('.close-iframe-top-btn');
+    if (closeTopBtn) {
+        if (window.self !== window.top) {
+            // iframe内で実行されている場合はボタンを表示
+            closeTopBtn.classList.remove('hidden');
+            console.log('iframe環境を検出：右上閉じるボタンを表示');
+        } else {
+            // 通常ウィンドウの場合はボタンを非表示
+            closeTopBtn.classList.add('hidden');
+            console.log('通常ウィンドウ環境：右上閉じるボタンを非表示');
+        }
+    }
 
     // 来場人数のオプションを生成
     initializeAttendanceCount();
