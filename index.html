@@ -136,51 +136,84 @@
                         <option value="参加しない">参加しない</option>
                     </select>
                 </div>
+
+                <!-- 追加: プラネタリウム鑑賞希望 -->
+                <div class="form-group">
+                    <label for="プラネタリウム鑑賞">🪐 プラネタリウムを鑑賞されますか？</label>
+                    <div class="select-wrapper">
+                        <select id="プラネタリウム鑑賞" name="プラネタリウム鑑賞" class="form-control" required>
+                            <option value="">選択してください</option>
+                            <option value="はい">はい</option>
+                            <option value="いいえ">いいえ</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- ステップ2: ワークショップ詳細 -->
             <div class="step-content" id="content-2">
-                <div class="info-card">
-                    <p>本ワークショップは、当日参加枠とは別に各時間帯に予約枠をご用意しております。</p>
-                    <p>✅ 予約枠（60名様分）: 事前にご予約が必要ですが、希望時間帯に確実にご参加いただけます。</p>
-                    <p>✅ 当日枠（40名様分）: 当日、お席が空いていればすぐにご参加いただけます。</p>
-                    <p>みなさまのご参加を心よりお待ちしております！</p>
-                </div>
+                <!-- ワークショップ詳細 -->
+                <div id="workshop-section">
+                    <div class="info-card">
+                        <p>本ワークショップは、当日参加枠とは別に各時間帯に予約枠をご用意しております。</p>
+                        <p>✅ 予約枠（60名様分）: 事前にご予約が必要ですが、希望時間帯に確実にご参加いただけます。</p>
+                        <p>✅ 当日枠（40名様分）: 当日、お席が空いていればすぐにご参加いただけます。</p>
+                        <p>みなさまのご参加を心よりお待ちしております！</p>
+                    </div>
 
-                <div class="form-group">
-                    <label for="ワークショップ参加人数">👥 ワークショップ参加人数</label>
-                    <div class="select-wrapper">
-                        <select id="ワークショップ参加人数" name="ワークショップ参加人数" class="form-control" required>
-                            <option value="">参加人数を選択してください</option>
-                            <option value="1">1人</option>
-                            <option value="2">2人</option>
-                            <option value="3">3人</option>
-                            <option value="4">4人</option>
-                            <option value="5">5人</option>
-                        </select>
+                    <div class="form-group">
+                        <label for="ワークショップ参加人数">👥 ワークショップ参加人数</label>
+                        <div class="select-wrapper">
+                            <select id="ワークショップ参加人数" name="ワークショップ参加人数" class="form-control">
+                                <option value="">参加人数を選択してください</option>
+                                <option value="1">1人</option>
+                                <option value="2">2人</option>
+                                <option value="3">3人</option>
+                                <option value="4">4人</option>
+                                <option value="5">5人</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="予約する部">⏰ 予約する部</label>
+                        <div class="select-wrapper">
+                            <select id="予約する部" name="予約する部" class="form-control">
+                                <option value="">予約する部を選択してください</option>
+                                <!-- JSで動的に選択肢追加 -->
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="予約する部">⏰ 予約する部</label>
-                    <div class="select-wrapper">
-                        <select id="予約する部" name="予約する部" class="form-control">
-                            <option value="">予約する部を選択してください</option>
-                            <!-- JSで動的に選択肢追加 -->
-                        </select>
-                    </div>
-                </div>
+                <!-- プラネタリウム詳細はステップ3へ分離しました -->
             </div>
 
-            <!-- ステップ3: 確認・登録 -->
+            <!-- ステップ3: プラネタリウム詳細 -->
             <div class="step-content" id="content-3">
-                <div class="info-card">
-                    <strong>✅ 入力内容の確認</strong><br>
-                    以下の内容で登録いたします
-                </div>
+                <div id="planetarium-section">
+                    <div class="info-card">
+                        <p>プラネタリウムは3部制です。ご希望の時間帯をお選びください。</p>
+                    </div>
 
-                <div id="confirmation-content">
-                    <!-- JSで動的に確認内容を表示 -->
+                    <div class="form-group">
+                        <label for="プラネタリウム参加人数">👥 プラネタリウム参加人数</label>
+                        <div class="select-wrapper">
+                            <select id="プラネタリウム参加人数" name="プラネタリウム参加人数" class="form-control">
+                                <option value="">参加人数を選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="プラネタリウム予約部">⏰ プラネタリウム予約部</label>
+                        <div class="select-wrapper">
+                            <select id="プラネタリウム予約部" name="プラネタリウム予約部" class="form-control">
+                                <option value="">予約する部を選択してください</option>
+                                <!-- JSで動的に選択肢追加 -->
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 

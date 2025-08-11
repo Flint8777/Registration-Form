@@ -823,7 +823,8 @@ select.form-control {
 
 .conditional-field.show {
     opacity: 1;
-    max-height: 200px;
+    max-height: 500px;
+    /* 高さを増やして見切れを防ぐ */
 }
 
 /* 完了画面 */
