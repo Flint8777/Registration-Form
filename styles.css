@@ -224,7 +224,6 @@ body::before {
 
 .header {
     text-align: center;
-    margin-bottom: 2rem;
     /* 確実に表示されるようz-indexを設定 */
     position: relative;
     z-index: 10;
@@ -309,6 +308,10 @@ body::before {
 .form-group {
     margin-bottom: 1.5rem;
     position: relative;
+    /* ヘッダーと同じ幅に制限 */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .form-group label {
@@ -566,6 +569,10 @@ body::before {
     gap: 1rem;
     margin-top: 1.5rem;
     justify-content: space-between;
+    /* ヘッダーと同じ幅に制限 */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .select-wrapper {
@@ -631,13 +638,20 @@ select.form-control {
 
 .info-card {
     background: linear-gradient(135deg, #ffecd2, #fcb69f);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    border-radius: 15px;
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
     text-align: center;
     color: #8b4513;
     font-size: 0.9rem;
     /* レスポンシブベース */
+    /* ヘッダーと完全に揃える */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    position: relative;
+    z-index: 10;
 }
 
 /* フォームタイトル専用のスタイル */
@@ -698,6 +712,10 @@ select.form-control {
     justify-content: center;
     margin-bottom: 2rem;
     position: relative;
+    /* ヘッダーと同じ幅に制限 */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .step {
@@ -1284,4 +1302,27 @@ select.form-control {
         color: #2c3e50;
         font-weight: 500;
     }
+}
+
+/* 2ページ目・3ページ目でヘッダーとタイトルを非表示 */
+.step-content#content-2.active~.header,
+.step-content#content-3.active~.header {
+    display: none;
+}
+
+.step-content#content-2.active~.form-title-card,
+.step-content#content-3.active~.form-title-card {
+    display: none;
+}
+
+/* より確実な非表示方法（JavaScriptで制御する場合の準備） */
+body.step-2 .header,
+body.step-3 .header {
+    display: none !important;
+}
+
+/* 1ページ目の「参加登録フォーム」のみを2ページ目・3ページ目で非表示 */
+body.step-2 .main-form-title,
+body.step-3 .main-form-title {
+    display: none !important;
 }

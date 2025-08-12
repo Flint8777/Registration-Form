@@ -226,6 +226,10 @@ function updateStep(step) {
     AccessibilityManager.announcePageChange(step);
     AccessibilityManager.updateProgressBar(step, CONFIG.STEPS.COMPLETION);
 
+    // bodyタグにステップクラスを追加（ヘッダー・タイトル非表示用）
+    document.body.className = document.body.className.replace(/\bstep-\d+\b/g, '');
+    document.body.classList.add(`step-${step}`);
+
     // ステップインジケーター更新
     for (let i = 1; i <= CONFIG.STEPS.COMPLETION; i++) {
         const stepElement = getElement(`#step-${i}`);
@@ -289,7 +293,17 @@ function updateNavigationButtons(step) {
 
     // 完了画面：ナビゲーションを非表示
     if (step === CONFIG.STEPS.COMPLETION) {
-        if (elements.navigation) elements.navigation.style.display = 'none';
+        if (elements.navigation) {
+            elements.navigation.style.display = 'none';
+            elements.navigation.style.visibility = 'hidden';
+        }
+        // 個別のボタンも確実に非表示にする
+        [elements.backBtn, elements.nextBtn, elements.submitBtn].forEach(btn => {
+            if (btn) {
+                btn.classList.remove(CONFIG.CLASSES.VISIBLE);
+                btn.style.display = 'none';
+            }
+        });
         return;
     }
 
@@ -1062,17 +1076,6 @@ function resetForm() {
     if (elements.navigation) elements.navigation.style.display = 'flex';
 }
 
-// 入力フィールドのアニメーション
-document.querySelectorAll('.form-control').forEach(input => {
-    input.addEventListener('focus', function () {
-        this.parentElement.classList.add('focused');
-    });
-
-    input.addEventListener('blur', function () {
-        this.parentElement.classList.remove('focused');
-    });
-});
-
 // iOS専用の軽量背景表示関数
 function ensureBackgroundDisplay() {
     const body = document.body;
@@ -1472,6 +1475,9 @@ function updateWorkshopParticipantOptions() {
 document.addEventListener('DOMContentLoaded', () => {
     // UIエレメントを初期化
     initializeElements();
+
+    // 初期ステップのbodyクラスを設定
+    document.body.classList.add(`step-${CONFIG.STEPS.BASIC_INFO}`);
 
     // 来場人数のオプションを生成
     initializeAttendanceCount();
