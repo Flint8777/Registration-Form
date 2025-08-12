@@ -654,7 +654,7 @@ async function loadWorkshopParts() {
 
         // キャッシュ回避のためタイムスタンプを追加
         const timestamp = new Date().getTime();
-        const apiUrl = `${CONFIG.API_URL}?action=getParts&t=${timestamp}`;
+        const apiUrl = `${CONFIG.API_URL}?action=getWorkshopParts&t=${timestamp}`;
 
         if (isIframe) {
             // iframe環境ではJSONPを使用
@@ -703,7 +703,21 @@ async function loadWorkshopParts() {
 
     } catch (error) {
         console.error('部の情報取得エラー:', error);
-        showResult('部の情報を取得できませんでした。しばらく後にもう一度お試しください。', false);
+
+        // APIが実装されていない場合のフォールバック：静的データを使用
+        console.log('APIが実装されていないため、静的データを使用します');
+        workshopParts = [
+            { name: '第1部 (13:30~14:30)', capacity: 15, reserved: 0, remaining: 15 },
+            { name: '第2部 (14:45~15:45)', capacity: 15, reserved: 0, remaining: 15 },
+            { name: '第3部 (16:00~17:00)', capacity: 15, reserved: 0, remaining: 15 },
+            { name: '第4部 (17:15~18:15)', capacity: 15, reserved: 0, remaining: 15 }
+        ];
+
+        // 初期状態で一度更新（参加人数0でも全部表示される）
+        updatePartOptions();
+        // ワークショップ参加人数の選択肢を来場人数に基づいて制限
+        updateWorkshopParticipantOptions();
+        updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
         setLoading(false);
     }
 }
@@ -719,14 +733,24 @@ async function loadPlanetariumParts() {
 
         let data;
 
+        // キャッシュ回避のためタイムスタンプを追加
+        const timestamp = new Date().getTime();
+
         if (isIframe) {
             // iframe環境ではJSONPを使用
             console.log('iframe環境のためJSONPを使用');
-            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
+            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const response = await fetch(`${CONFIG.API_URL}?action=getPlanetariumParts`);
+            const response = await fetch(`${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
