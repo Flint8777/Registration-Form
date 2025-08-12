@@ -29,7 +29,7 @@
         </div>
 
         <!-- 参加登録フォームタイトル -->
-        <div class="info-card form-title-card">
+        <div class="info-card form-title-card main-form-title">
             <h2>参加登録フォーム</h2>
             <p>　複数名で参加される方は、代表者のみご回答ください。なお、ご記入いただいた情報は本イベントの活動以外では使用いたしません。</p>
         </div>
@@ -129,6 +129,21 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="イベント認知経路">📢 本イベントを知ったきっかけを教えてください。</label>
+                    <div class="select-wrapper">
+                        <select id="イベント認知経路" name="イベント認知経路" class="form-control" required>
+                            <option value="">選択してください</option>
+                            <option value="SNS">SNS</option>
+                            <option value="ポスター">ポスター</option>
+                            <option value="HP">HP</option>
+                            <option value="口コミ">口コミ</option>
+                            <option value="公民館だより">公民館だより</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="ワークショップ参加">✂ ワークショップ（月齢キーホルダー作り）に参加されますか？</label>
                     <select id="ワークショップ参加" name="ワークショップ参加" class="form-control" required>
                         <option value="">選択してください</option>
@@ -152,13 +167,17 @@
 
             <!-- ステップ2: ワークショップ詳細 -->
             <div class="step-content" id="content-2">
+                <!-- ワークショップ予約タイトル -->
+                <div class="info-card form-title-card">
+                    <h2>ワークショップ予約</h2>
+                </div>
+
                 <!-- ワークショップ詳細 -->
                 <div id="workshop-section">
                     <div class="info-card">
-                        <p>本ワークショップは、当日参加枠とは別に各時間帯に予約枠をご用意しております。</p>
+                        <p>本ワークショップは【予約枠】と【当日枠】をご用意しています。</p>
                         <p>✅ 予約枠（60名様分）: 事前にご予約が必要ですが、希望時間帯に確実にご参加いただけます。</p>
                         <p>✅ 当日枠（40名様分）: 当日、お席が空いていればすぐにご参加いただけます。</p>
-                        <p>みなさまのご参加を心よりお待ちしております！</p>
                     </div>
 
                     <div class="form-group">
@@ -195,9 +214,17 @@
 
             <!-- ステップ3: プラネタリウム詳細 -->
             <div class="step-content" id="content-3">
+                <!-- プラネタリウム予約タイトル -->
+                <div class="info-card form-title-card">
+                    <h2>プラネタリウム予約</h2>
+                </div>
+
                 <div id="planetarium-section">
                     <div class="info-card">
-                        <p>プラネタリウムは3部制です。ご希望の時間帯をお選びください。</p>
+                        <p>本プラネタリウムは【予約枠】と【当日枠】をご用意しています。</p>
+                        <p>✅️ 予約枠（20名）：事前にご予約いただくと、ご希望の時間帯に確実にご参加いただけます。</p>
+                        <p>✅️ 当日枠（10名）：当日、空席がある場合に先着順でご案内します（満席の場合はご参加いただけません）。</p>
+                        <p>※予約枠が満席の場合も、当日枠のご案内は可能です。</p>
                     </div>
 
                     <div class="form-group">
@@ -211,7 +238,10 @@
 
                     <div class="form-group">
                         <label for="プラネタリウム予約部">⏰ 予約する部
-                            <p>※上映時間は30分程度です。また、上映時間までにお越しにならなかった場合、自動的にキャンセル扱いとなります。</p>
+                            <p>　　・各回の上映時間は約30分です。</p>
+                            <p>　　・上映中の途中入退場はできません。</p>
+                            <p>　　・当日は受付がありますので、上映開始の5分前までに必ずお越しください。</p>
+                            <p>　　　お越しにならなかった場合、自動的にキャンセル扱いとなります。</p>
                         </label>
                         <div class="select-wrapper">
                             <select id="プラネタリウム予約部" name="プラネタリウム予約部" class="form-control">
@@ -227,9 +257,8 @@
             <div class="step-content" id="content-4">
                 <div class="completion-screen">
                     <div class="completion-icon">🎉</div>
-                    <div class="completion-title">予約が完了しました！</div>
-                    <div class="completion-message">
-                        ✅ ご予約が完了しました！<br>
+                    <div class="completion-title" style="color: #ffffff;">予約が完了しました！</div>
+                    <div class="completion-message" style="color: #ffffff;">
                         確認メールをお送りいたしましたので、ご確認ください。<br>
                         当日は気をつけてお越しください。<br>
                         <small style="color: #ffffff; margin-top: 10px; display: block;">
