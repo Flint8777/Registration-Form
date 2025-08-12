@@ -307,7 +307,7 @@ function updateNavigationButtons(step) {
     // Step 2以降で最終入力ステップを計算
     const workshopParticipation = formData['ワークショップ参加'] || elements.workshopParticipation?.value;
     const planetariumIntent = formData['プラネタリウム鑑賞'] || elements.planetariumIntent?.value;
-    const lastDataStep = (workshopParticipation === '参加する')
+    const lastDataStep = (workshopParticipation === 'はい')
         ? ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.WORKSHOP_DETAILS)
         : ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.BASIC_INFO);
 
@@ -325,7 +325,7 @@ function previousStep() {
 
     if (currentStep === CONFIG.STEPS.PLANETARIUM_DETAILS) {
         const workshopParticipation = formData['ワークショップ参加'] || elements.workshopParticipation?.value;
-        const target = (workshopParticipation === '参加する') ? CONFIG.STEPS.WORKSHOP_DETAILS : CONFIG.STEPS.BASIC_INFO;
+        const target = (workshopParticipation === 'はい') ? CONFIG.STEPS.WORKSHOP_DETAILS : CONFIG.STEPS.BASIC_INFO;
         updateStep(target);
         return;
     }
@@ -393,7 +393,7 @@ async function nextStep() {
             });
 
             // 両方選択されている場合はワークショップから開始
-            if (workshopParticipation === '参加する') {
+            if (workshopParticipation === 'はい') {
                 console.log('ワークショップStep 2へ遷移（プラネタリウム意向:', planetariumIntent, '）');
                 await loadWorkshopParts(); // 内部でStep2へ遷移
                 setButtonLoading(elements.nextBtn, false);
@@ -464,7 +464,7 @@ function nextStep_old() {
         if (currentStep === CONFIG.STEPS.BASIC_INFO) {
             const workshopParticipation = elements.workshopParticipation?.value;
 
-            if (workshopParticipation === '参加しない') {
+            if (workshopParticipation === 'いいえ') {
                 updateStep(CONFIG.STEPS.CONFIRMATION);
                 generateConfirmationContent();
                 return;
@@ -525,7 +525,7 @@ function validateCurrentStep() {
     // ステップ2: ワークショップのみバリデーション
     if (currentStep === CONFIG.STEPS.WORKSHOP_DETAILS) {
         const workshopParticipation = elements.workshopParticipation?.value;
-        if (workshopParticipation === '参加する') {
+        if (workshopParticipation === 'はい') {
             const participantCount = document.getElementById('ワークショップ参加人数').value;
             const selectedPart = document.getElementById('予約する部').value;
             if (!participantCount || participantCount < 1) {
@@ -600,7 +600,7 @@ function saveCurrentStepData() {
             delete formData['プラネタリウム予約部'];
         }
         const workshopParticipation = elements.workshopParticipation?.value;
-        if (workshopParticipation !== '参加する') {
+        if (workshopParticipation !== 'はい') {
             delete formData['ワークショップ参加人数'];
             delete formData['予約する部'];
         }
@@ -925,7 +925,7 @@ function generateConfirmationContent() {
                 <div><strong>ワークショップ参加:</strong> ${formData['ワークショップ参加'] || ''}</div>
     `;
 
-    if (formData['ワークショップ参加'] === '参加する') {
+    if (formData['ワークショップ参加'] === 'はい') {
         content += `
                 <div><strong>ワークショップ参加人数:</strong> ${formData['ワークショップ参加人数'] || ''}人</div>
                 <div><strong>予約する部:</strong> ${formData['予約する部'] || ''}</div>
@@ -1134,7 +1134,7 @@ function setupEventListeners() {
     // ワークショップ参加選択の変更監視
     elements.workshopParticipation?.addEventListener('change', function () {
         const participationValue = this.value;
-        if (participationValue === '参加しない') {
+        if (participationValue === 'いいえ') {
             // 観望会のみの場合、ワークショップ関連データをクリア
             delete formData['ワークショップ参加人数'];
             delete formData['予約する部'];
@@ -1234,7 +1234,7 @@ function setupEventListeners() {
     // ワークショップ参加の表示制御（ステップ2のセクション）
     elements.workshopParticipation?.addEventListener('change', function (event) {
         event.stopPropagation(); // イベントの伝播を停止
-        const isJoin = this.value === '参加する';
+        const isJoin = this.value === 'はい';
         const workshopSection = document.getElementById('workshop-section');
         if (workshopSection) {
             workshopSection.classList.toggle('show', isJoin);
