@@ -1038,16 +1038,6 @@ function resetForm() {
     if (elements.navigation) elements.navigation.style.display = 'flex';
 }
 
-// ワークショップ参加選択の変更監視
-document.getElementById('ワークショップ参加').addEventListener('change', function () {
-    const participationValue = this.value;
-    if (participationValue === '参加しない') {
-        // 観望会のみの場合、ワークショップ関連データをクリア
-        delete formData['ワークショップ参加人数'];
-        delete formData['予約する部'];
-    }
-});
-
 // 入力フィールドのアニメーション
 document.querySelectorAll('.form-control').forEach(input => {
     input.addEventListener('focus', function () {
