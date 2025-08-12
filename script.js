@@ -1155,27 +1155,6 @@ function setupEventListeners() {
         await submitForm();
     });
 
-    // ワークショップ参加選択の変更監視
-    elements.workshopParticipation?.addEventListener('change', function () {
-        const participationValue = this.value;
-        if (participationValue === 'いいえ') {
-            // 観望会のみの場合、ワークショップ関連データをクリア
-            delete formData['ワークショップ参加人数'];
-            delete formData['予約する部'];
-        }
-    });
-
-    // 入力フィールドのアニメーション
-    document.querySelectorAll('.form-control').forEach(input => {
-        input.addEventListener('focus', function () {
-            this.parentElement.classList.add(CONFIG.CLASSES.FOCUSED);
-        });
-
-        input.addEventListener('blur', function () {
-            this.parentElement.classList.remove(CONFIG.CLASSES.FOCUSED);
-        });
-    });
-
     // メールアドレスのリアルタイムバリデーション
     setupEmailValidation();
 
@@ -1308,15 +1287,60 @@ function setupEventListeners() {
         }
     });
 
-    // 初期表示時にも現在の選択状態を反映
+    // 初期表示時の状態を直接設定（dispatchEventを使わない）
     if (elements.transportMode) {
-        elements.transportMode.dispatchEvent(new Event('change'));
+        const isCar = elements.transportMode.value === '車';
+        if (elements.carCountGroup) {
+            elements.carCountGroup.classList.toggle('show', isCar);
+            elements.carCountGroup.setAttribute('aria-hidden', isCar ? 'false' : 'true');
+        }
+        if (elements.carCount) {
+            if (isCar) {
+                elements.carCount.setAttribute('required', 'required');
+            } else {
+                elements.carCount.removeAttribute('required');
+            }
+        }
     }
+
     if (elements.workshopParticipation) {
-        elements.workshopParticipation.dispatchEvent(new Event('change'));
+        const isJoin = elements.workshopParticipation.value === 'はい';
+        const workshopSection = document.getElementById('workshop-section');
+        if (workshopSection) {
+            workshopSection.classList.toggle('show', isJoin);
+            workshopSection.setAttribute('aria-hidden', isJoin ? 'false' : 'true');
+        }
+        const wsCount = document.getElementById('ワークショップ参加人数');
+        const wsPart = document.getElementById('予約する部');
+        if (wsCount && wsPart) {
+            if (isJoin) {
+                wsCount.setAttribute('required', 'required');
+                wsPart.setAttribute('required', 'required');
+            } else {
+                wsCount.removeAttribute('required');
+                wsPart.removeAttribute('required');
+            }
+        }
     }
+
     if (elements.planetariumIntent) {
-        elements.planetariumIntent.dispatchEvent(new Event('change'));
+        const isYes = elements.planetariumIntent.value === 'はい';
+        const section = document.getElementById('planetarium-section');
+        if (section) {
+            section.classList.toggle('show', isYes);
+            section.setAttribute('aria-hidden', isYes ? 'false' : 'true');
+        }
+        const pCount = document.getElementById('プラネタリウム参加人数');
+        const pPart = document.getElementById('プラネタリウム予約部');
+        if (pCount && pPart) {
+            if (isYes) {
+                pCount.setAttribute('required', 'required');
+                pPart.setAttribute('required', 'required');
+            } else {
+                pCount.removeAttribute('required');
+                pPart.removeAttribute('required');
+            }
+        }
     }
 }
 
@@ -1363,8 +1387,8 @@ function setupEmailValidation() {
 function initializeAttendanceCount() {
     const attendanceSelect = document.getElementById('来場人数');
     if (attendanceSelect) {
-        // 1～100人のオプションを生成
-        for (let i = 1; i <= 100; i++) {
+        // 1～20人のオプションを生成
+        for (let i = 1; i <= 20; i++) {
             const option = document.createElement('option');
             option.value = i.toString();
             option.textContent = `${i}人`;
@@ -1415,33 +1439,32 @@ function updateWorkshopParticipantOptions() {
 
     // 来場人数を取得
     const totalAttendance = parseInt(formData['来場人数'] || elements.attendanceCount?.value || 0);
+    const maxCount = totalAttendance > 0 ? Math.min(totalAttendance, 5) : 5;
 
-    console.log(`ワークショップ参加人数の選択肢を更新: 来場人数${totalAttendance}人に基づいて制限`);
+    console.log(`ワークショップ参加人数の選択肢を再生成: 最大${maxCount}人（来場人数: ${totalAttendance}人）`);
 
-    // 既存のオプションを確認して制限
-    const options = wsSelect.querySelectorAll('option');
-    options.forEach(option => {
-        if (option.value && option.value !== '') {
-            const optionValue = parseInt(option.value);
-            if (totalAttendance > 0 && optionValue > totalAttendance) {
-                option.disabled = true;
-                option.textContent = `${optionValue}人（来場人数を超過）`;
-                option.style.color = '#999';
-            } else {
-                option.disabled = false;
-                option.textContent = `${optionValue}人`;
-                option.style.color = '';
-            }
-        }
-    });
+    // 現在の選択を保持
+    const currentValue = wsSelect.value;
 
-    // 現在選択されている値が制限を超えている場合はリセット
-    if (wsSelect.value && totalAttendance > 0) {
-        const currentValue = parseInt(wsSelect.value);
-        if (currentValue > totalAttendance) {
-            wsSelect.value = '';
-            console.log(`ワークショップ参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
-        }
+    // 既存のオプションをクリア（placeholder以外）
+    while (wsSelect.children.length > 1) {
+        wsSelect.removeChild(wsSelect.lastChild);
+    }
+
+    // 新しいオプションを生成（1～maxCountまで）
+    for (let i = 1; i <= maxCount; i++) {
+        const option = document.createElement('option');
+        option.value = i.toString();
+        option.textContent = `${i}人`;
+        wsSelect.appendChild(option);
+    }
+
+    // 可能であれば以前の選択を復元、不可能な場合はリセット
+    if (currentValue && parseInt(currentValue) <= maxCount) {
+        wsSelect.value = currentValue;
+    } else if (currentValue && totalAttendance > 0) {
+        wsSelect.value = '';
+        console.log(`ワークショップ参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
     }
 }
 
