@@ -660,9 +660,11 @@ async function loadWorkshopParts() {
     try {
         setLoading(true);
 
-        // iframe環境での制限を検知
+        // iframe環境またはGitHubPages環境での制限を検知
         const isIframe = window.self !== window.top;
-        console.log('iframe環境:', isIframe);
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        const shouldUseJsonp = isIframe || isGitHubPages;
+        console.log('iframe環境:', isIframe, 'GitHubPages環境:', isGitHubPages, 'JSONP使用:', shouldUseJsonp);
 
         let data;
 
@@ -670,10 +672,11 @@ async function loadWorkshopParts() {
         const timestamp = new Date().getTime();
         const apiUrl = `${CONFIG.API_URL}?action=getWorkshopParts&t=${timestamp}`;
 
-        if (isIframe) {
-            // iframe環境ではJSONPを使用
-            console.log('iframe環境のためJSONPを使用');
+        if (shouldUseJsonp) {
+            // iframe環境またはGitHubPages環境ではJSONPを使用
+            console.log('CORS制限回避のためJSONPを使用:', apiUrl);
             data = await fetchWithJsonp(apiUrl);
+            console.log('JSONP応答データ:', data);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
@@ -749,19 +752,22 @@ async function loadPlanetariumParts() {
     try {
         setLoading(true);
 
-        // iframe環境での制限を検知
+        // iframe環境またはGitHubPages環境での制限を検知
         const isIframe = window.self !== window.top;
-        console.log('iframe環境:', isIframe);
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        const shouldUseJsonp = isIframe || isGitHubPages;
+        console.log('iframe環境:', isIframe, 'GitHubPages環境:', isGitHubPages, 'JSONP使用:', shouldUseJsonp);
 
         let data;
 
         // キャッシュ回避のためタイムスタンプを追加
         const timestamp = new Date().getTime();
 
-        if (isIframe) {
-            // iframe環境ではJSONPを使用
-            console.log('iframe環境のためJSONPを使用');
+        if (shouldUseJsonp) {
+            // iframe環境またはGitHubPages環境ではJSONPを使用
+            console.log('CORS制限回避のためJSONPを使用 (プラネタリウム):', `${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`);
             data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`);
+            console.log('JSONP応答データ (プラネタリウム):', data);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
