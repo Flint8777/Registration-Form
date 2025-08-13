@@ -721,10 +721,18 @@ async function loadWorkshopParts() {
         // APIが実装されていない場合のフォールバック：静的データを使用
         console.log('APIが実装されていないため、静的データを使用します');
         workshopParts = [
-            { name: '第1部 (13:30~14:30)', capacity: 15, reserved: 0, remaining: 15 },
-            { name: '第2部 (14:45~15:45)', capacity: 15, reserved: 0, remaining: 15 },
-            { name: '第3部 (16:00~17:00)', capacity: 15, reserved: 0, remaining: 15 },
-            { name: '第4部 (17:15~18:15)', capacity: 15, reserved: 0, remaining: 15 }
+            { name: '第1部 (13:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第2部 (14:00集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第3部 (14:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第4部 (15:00集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第5部 (15:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第6部 (16:00集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第7部 (16:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第8部 (17:00集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第9部 (17:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第10部 (18:00集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第11部 (18:30集合)', capacity: 5, reserved: 0, remaining: 5 },
+            { name: '第12部 (19:00集合)', capacity: 5, reserved: 0, remaining: 5 }
         ];
 
         // 初期状態で一度更新（参加人数0でも全部表示される）
@@ -795,9 +803,9 @@ async function loadPlanetariumParts() {
         // APIが実装されていない場合のフォールバック：静的データを使用
         console.log('APIが実装されていないため、静的データを使用します');
         planetariumParts = [
-            { name: '第1部 (13:30~14:00)', remaining: 30 },
-            { name: '第2部 (14:30~15:00)', remaining: 30 },
-            { name: '第3部 (15:30~16:00)', remaining: 30 }
+            { name: '第1部 (13:30上映開始)', remaining: 20 },
+            { name: '第2部 (14:30上映開始)', remaining: 20 },
+            { name: '第3部 (15:30上映開始)', remaining: 20 }
         ];
 
         updatePlanetariumPartOptions();
