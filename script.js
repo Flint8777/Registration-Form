@@ -633,10 +633,19 @@ function fetchWithJsonp(url) {
             resolve(data);
         };
 
-        // リファラー情報を追加
+        // リファラー情報を追加（複数の方法で試行）
         const currentUrl = window.location.href;
         const separator = url.indexOf('?') >= 0 ? '&' : '?';
-        const urlWithReferrer = url + separator + 'callback=' + callbackName + '&referrer=' + encodeURIComponent(currentUrl);
+        const urlWithReferrer = url + separator + 'callback=' + callbackName +
+            '&referrer=' + encodeURIComponent(currentUrl) +
+            '&ref=' + encodeURIComponent(currentUrl) +
+            '&source=' + encodeURIComponent(currentUrl);
+
+        console.log('=== JSONP リクエスト詳細 ===');
+        console.log('元のURL:', url);
+        console.log('現在のページURL:', currentUrl);
+        console.log('エンコード済みリファラー:', encodeURIComponent(currentUrl));
+        console.log('最終リクエストURL:', urlWithReferrer);
 
         // スクリプトタグを作成してJSONPリクエスト
         const script = document.createElement('script');
