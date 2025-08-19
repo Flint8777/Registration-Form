@@ -633,9 +633,14 @@ function fetchWithJsonp(url) {
             resolve(data);
         };
 
+        // リファラー情報を追加
+        const currentUrl = window.location.href;
+        const separator = url.indexOf('?') >= 0 ? '&' : '?';
+        const urlWithReferrer = url + separator + 'callback=' + callbackName + '&referrer=' + encodeURIComponent(currentUrl);
+
         // スクリプトタグを作成してJSONPリクエスト
         const script = document.createElement('script');
-        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+        script.src = urlWithReferrer;
         script.onerror = function () {
             delete window[callbackName];
             document.body.removeChild(script);
@@ -680,7 +685,8 @@ async function loadWorkshopParts() {
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const response = await fetch(apiUrl, {
+            const apiUrlWithReferrer = apiUrl + (apiUrl.indexOf('?') >= 0 ? '&' : '?') + 'referrer=' + encodeURIComponent(window.location.href);
+            const response = await fetch(apiUrlWithReferrer, {
                 method: 'GET',
                 cache: 'no-cache', // キャッシュを無効化
                 headers: {
@@ -771,7 +777,8 @@ async function loadPlanetariumParts() {
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const response = await fetch(`${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`, {
+            const planetariumApiUrl = `${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}&referrer=${encodeURIComponent(window.location.href)}`;
+            const response = await fetch(planetariumApiUrl, {
                 method: 'GET',
                 cache: 'no-cache',
                 headers: {
@@ -1037,6 +1044,13 @@ async function submitForm() {
             input.value = formData[key];
             submitFormElement.appendChild(input);
         });
+
+        // Referrer情報を追加
+        const referrerInput = document.createElement('input');
+        referrerInput.type = 'hidden';
+        referrerInput.name = 'referrer';
+        referrerInput.value = window.location.href;
+        submitFormElement.appendChild(referrerInput);
 
         document.body.appendChild(submitFormElement);
 
