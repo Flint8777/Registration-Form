@@ -669,20 +669,9 @@ async function loadWorkshopParts() {
             console.log('iframe環境のためJSONPを使用');
             data = await fetchWithJsonp(apiUrl);
         } else {
-            // 通常環境ではfetchを使用
-            console.log('通常環境のためfetchを使用');
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                cache: 'no-cache', // キャッシュを無効化
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            data = await response.json();
+            // CORS問題回避のため、通常環境でもJSONPを使用
+            console.log('CORS回避のためJSONPを使用');
+            data = await fetchWithJsonp(apiUrl);
         }
 
         console.log('APIレスポンス全体:', data); // デバッグ用
@@ -732,13 +721,9 @@ async function loadPlanetariumParts() {
             console.log('iframe環境のためJSONPを使用');
             data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
         } else {
-            // 通常環境ではfetchを使用
-            console.log('通常環境のためfetchを使用');
-            const response = await fetch(`${CONFIG.API_URL}?action=getPlanetariumParts`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            data = await response.json();
+            // CORS問題回避のため、通常環境でもJSONPを使用
+            console.log('CORS回避のためJSONPを使用');
+            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
         }
 
         console.log('プラネタリウムAPIレスポンス全体:', data); // デバッグ用
