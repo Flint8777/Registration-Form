@@ -1,15 +1,6 @@
-# 気仙沼星空観望## 🌟 概要
+# 気仙沼星空観望会 予約システム
 
-気仙沼で開催される星空観望会の予約システムです。参加者が簡単に予約できるWebアプリケーションを提供し、地域の天体観測活動を支援します。
-
-## 🌐 ライブデモ
-
-**🔗 公開URL**: https://flint8777.github.io/TEST_KesenNuma-StarryNight/ム
-
-[![GitHub Pa- 🕐 時間帯別予約（残席あり/残席なし表示）- 📱 **PWA対応**: Progressive Web App機能実装- 🚗 交通手段選択（条件付き車台数入力）s](https://img.shields.io/badge/demo-live-brightgreen)](https://flint8777.github.io/T├── 📄 index.html              # メインページ（SEO・OGP対応）
-├── 🎨 styles.css              # スタイルシート（グレーアウト対応含む）
-├── ⚡ script.js               # フロントエンド機能（統一UI・残席表示）
-├── 🖼️ iframe-embed-codes.html # 埋め込みコードesenNuma-StarryNight/)
+[![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://flint8777.github.io/TEST_KesenNuma-StarryNight/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Security](https://img.shields.io/badge/security-enterprise--grade-blue)](#-セキュリティ機能)
 
@@ -17,7 +8,7 @@
 
 気仙沼で開催される星空観望会の予約システムです。参加者が簡単に予約できるWebアプリケーションを提供し、地域の天体観測活動を支援します。
 
-## � ライブデモ
+## 🌐 ライブデモ
 
 **🔗 公開URL**: https://flint8777.github.io/TEST_KesenNuma-StarryNight/
 
@@ -37,8 +28,8 @@
 - 👥 出席者数選択（1-100名）
 - 🎪 ワークショップ参加選択（はい/いいえ）
 - 🌟 プラネタリウム鑑賞予約（はい/いいえ）
-- � 時間帯別予約（残席あり/残席なし表示）
-- �🚗 交通手段選択（条件付き車台数入力）
+- 🕐 時間帯別予約（残席あり/残席なし表示）
+- 🚗 交通手段選択（条件付き車台数入力）
 - 📧 自動確認メール送信
 - 📊 全選択肢表示（無効選択肢はグレーアウト）
 
@@ -61,7 +52,7 @@
 - 🔍 **SEO最適化**: メタタグ・キーワード設定
 - 📱 **OGP対応**: SNSシェア時の最適化表示
 - 🐦 **Twitter Card**: Twitter専用シェア設定
-- � **PWA対応**: Progressive Web App機能実装
+- 📱 **PWA対応**: Progressive Web App機能実装
 
 ### 📱 PWA機能（準備済み）
 - 🏠 **ホーム画面追加**: アプリライクな体験
@@ -128,10 +119,9 @@ const CONFIG = {
 
 ```
 ├── 📄 index.html              # メインページ（SEO・OGP対応）
-├── 🎨 styles.css              # スタイルシート
-├── ⚡ script.js               # フロントエンド機能
-├── � analytics.js            # Google Analytics管理
-├── �🖼️ iframe-embed-codes.html # 埋め込みコード
+├── 🎨 styles.css              # スタイルシート（グレーアウト対応含む）
+├── ⚡ script.js               # フロントエンド機能（統一UI・残席表示）
+├── 🖼️ iframe-embed-codes.html # 埋め込みコード
 ├── 🔧 config.example.js       # 設定テンプレート
 ├── 🔒 config.js              # 実際の設定（Git非公開）
 ├── 📱 manifest.json           # PWA設定
@@ -178,12 +168,6 @@ const CONFIG = {
 - `シンボルマーク.png`: ファビコン・アプリアイコン用
 - `OGP-image.png`: SNSシェア用専用画像
 - `観望会ロゴタイプ_黒.png`: メインロゴ・404ページ用
-
-### 📊 アナリティクス設定
-`analytics.js`でトラッキングをカスタマイズ：
-- カスタムイベントの追加
-- コンバージョン目標の設定
-- プライバシー設定の調整
 
 ## 🔒 セキュリティについて
 
@@ -248,4 +232,3 @@ const CONFIG = {
 **📅 最終更新**: 2025年8月20日  
 **🏷️ バージョン**: 2.1.0  
 **📧 開発者**: 気仙沼星空観望会チーム
-
