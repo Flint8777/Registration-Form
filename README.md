@@ -1,6 +1,12 @@
-# 気仙沼星空観望会 予約システム
+# 気仙沼星空観望## 🌟 概要
 
-[![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://flint8777.github.io/T├── 📄 index.html              # メインページ（SEO・OGP対応）
+気仙沼で開催される星空観望会の予約システムです。参加者が簡単に予約できるWebアプリケーションを提供し、地域の天体観測活動を支援します。
+
+## 🌐 ライブデモ
+
+**🔗 公開URL**: https://flint8777.github.io/TEST_KesenNuma-StarryNight/ム
+
+[![GitHub Pa- 🕐 時間帯別予約（残席あり/残席なし表示）- 📱 **PWA対応**: Progressive Web App機能実装- 🚗 交通手段選択（条件付き車台数入力）s](https://img.shields.io/badge/demo-live-brightgreen)](https://flint8777.github.io/T├── 📄 index.html              # メインページ（SEO・OGP対応）
 ├── 🎨 styles.css              # スタイルシート（グレーアウト対応含む）
 ├── ⚡ script.js               # フロントエンド機能（統一UI・残席表示）
 ├── 🖼️ iframe-embed-codes.html # 埋め込みコードesenNuma-StarryNight/)
