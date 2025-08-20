@@ -40,9 +40,25 @@ class AccessibilityManager {
     }
 }
 
+// 設定ファイルの読み込み
+// 注意: config.js は実際の設定値を含むため .gitignore に含まれます
+// GitHub公開版では config.example.js をベースに config.js を作成してください
+let APP_CONFIG;
+try {
+    // 実際の設定ファイルから読み込み（GitHub非公開）
+    APP_CONFIG = CONFIG || {};
+} catch (error) {
+    console.warn('config.js が見つかりません。config.example.js をベースに config.js を作成してください。');
+    APP_CONFIG = {
+        API_URL: 'YOUR_GAS_DEPLOYMENT_URL_HERE',
+        MAX_PARTICIPANTS: 6,
+        TIMEOUT_MS: 30000
+    };
+}
+
 // 定数定義（DRY原則適用）
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/***REMOVED***/exec',
+    API_URL: APP_CONFIG.API_URL,
     STEPS: {
         BASIC_INFO: 1,
         WORKSHOP_DETAILS: 2,
@@ -86,6 +102,43 @@ const CONFIG = {
         FOCUSED: 'focused'
     }
 };
+
+// 設定の検証とセキュリティチェック
+function validateConfiguration() {
+    // APIエンドポイントの検証
+    if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
+        console.error('🚨 セキュリティ警告: API_URLが設定されていません');
+        console.warn('config.example.js をベースに config.js を作成し、実際のGoogle Apps ScriptのデプロイURLを設定してください');
+
+        // 開発者向けの詳細なガイダンス
+        const setupInstructions = `
+📋 セットアップ手順:
+1. config.example.js を config.js にコピー
+2. Google Apps Script でプロジェクトをデプロイ
+3. デプロイURLを config.js の API_URL に設定
+4. config.js は .gitignore に含まれるため GitHub に公開されません
+        `;
+        console.log(setupInstructions);
+
+        return false;
+    }
+
+    // URL形式の検証
+    try {
+        new URL(CONFIG.API_URL);
+    } catch (error) {
+        console.error('🚨 設定エラー: 無効なAPI_URL形式です', CONFIG.API_URL);
+        return false;
+    }
+
+    // Google Apps Script エンドポイントかどうかの確認
+    if (!CONFIG.API_URL.includes('script.google.com')) {
+        console.warn('⚠️ 警告: Google Apps Script以外のエンドポイントが設定されています');
+    }
+
+    console.log('✅ 設定の検証が完了しました');
+    return true;
+}
 
 // グローバル変数
 let currentStep = CONFIG.STEPS.BASIC_INFO;
@@ -1510,6 +1563,24 @@ function updateWorkshopParticipantOptions() {
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
+    // 🔒 セキュリティ: 設定の検証を最初に実行
+    const configValid = validateConfiguration();
+    if (!configValid) {
+        console.error('❌ アプリケーションの初期化が中断されました: 設定に問題があります');
+
+        // ユーザーに分かりやすいエラーメッセージを表示
+        const errorMessage = document.createElement('div');
+        errorMessage.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; 
+            background: #ff4757; color: white; padding: 15px; 
+            text-align: center; font-weight: bold; z-index: 9999;
+        `;
+        errorMessage.innerHTML = '⚙️ システム設定を確認してください。詳細はコンソールをご確認ください。';
+        document.body.insertBefore(errorMessage, document.body.firstChild);
+
+        return; // 初期化を中断
+    }
+
     // UIエレメントを初期化
     initializeElements();
 
