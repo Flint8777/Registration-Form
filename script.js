@@ -43,12 +43,22 @@ class AccessibilityManager {
 // 設定ファイルの読み込み
 // 注意: config.js は実際の設定値を含むため .gitignore に含まれます
 // GitHub公開版では config.example.js をベースに config.js を作成してください
+
+// GitHub Pages デモモード判定
+const isGitHubPages = window.location.hostname.includes('github.io');
+
 let APP_CONFIG;
 try {
     // 実際の設定ファイルから読み込み（GitHub非公開）
     APP_CONFIG = CONFIG || {};
 } catch (error) {
-    console.warn('config.js が見つかりません。config.example.js をベースに config.js を作成してください。');
+    if (isGitHubPages) {
+        console.log('🌐 GitHub Pages デモモードで動作中');
+        console.log('📝 このサイトはデモ用です。実際の予約機能を利用するには設定が必要です。');
+    } else {
+        console.warn('config.js が見つかりません。config.example.js をベースに config.js を作成してください。');
+    }
+
     APP_CONFIG = {
         API_URL: 'YOUR_GAS_DEPLOYMENT_URL_HERE',
         MAX_PARTICIPANTS: 6,
@@ -105,6 +115,19 @@ const CONFIG = {
 
 // 設定の検証とセキュリティチェック
 function validateConfiguration() {
+    // GitHub Pages デモモードの場合は簡略化
+    if (isGitHubPages) {
+        if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
+            console.log('🌐 GitHub Pages デモモード: 予約機能は無効です');
+            console.log('✨ フォーム機能とUIをお試しいただけます');
+            console.log('📖 完全な機能については README をご覧ください');
+
+            // デモモード用の控えめな通知
+            showDemoModeNotification();
+            return true; // デモモードでは続行を許可
+        }
+    }
+
     // APIエンドポイントの検証
     if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
         console.error('🚨 セキュリティ警告: API_URLが設定されていません');
@@ -138,6 +161,37 @@ function validateConfiguration() {
 
     console.log('✅ 設定の検証が完了しました');
     return true;
+}
+
+// GitHub Pages デモモード用の通知表示
+function showDemoModeNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        color: white; padding: 12px; text-align: center; 
+        font-weight: 500; z-index: 9999; font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    `;
+    notification.innerHTML = `
+        🌐 デモサイトです | ✨ フォーム機能をお試しください | 
+        📖 <a href="https://github.com/flint8777/TEST_KesenNuma-StarryNight" 
+           style="color: #ffd700; text-decoration: none;">完全版の設定方法はこちら</a>
+    `;
+
+    // ページの最上部に挿入
+    document.body.insertBefore(notification, document.body.firstChild);
+
+    // 10秒後にフェードアウト
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s ease';
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 10000);
 }
 
 // グローバル変数
@@ -1565,7 +1619,7 @@ function updateWorkshopParticipantOptions() {
 document.addEventListener('DOMContentLoaded', () => {
     // 🔒 セキュリティ: 設定の検証を最初に実行
     const configValid = validateConfiguration();
-    if (!configValid) {
+    if (!configValid && !isGitHubPages) {
         console.error('❌ アプリケーションの初期化が中断されました: 設定に問題があります');
 
         // ユーザーに分かりやすいエラーメッセージを表示
