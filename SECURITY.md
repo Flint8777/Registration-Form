@@ -1,97 +1,97 @@
-# 🔒 GitHub公開時のセキュリティガイド
+# セキュリティポリシー
 
-## ⚠️ 重要な留意点
+## 🛡️ セキュリティ対策概要
 
-### 1. **公開前の必須チェック**
-- [ ] `.gitignore` ファイルの確認
-- [ ] Google Apps Scriptファイル（.gs）の除外
-- [ ] APIエンドポイントURL の環境変数化
-- [ ] スプレッドシートID の除外
-- [ ] 機密情報の完全除去
+気仙沼星空観望会予約システムは、エンタープライズレベルのセキュリティ対策を実装しています。
 
-### 2. **機密情報リスト**
-```
-❌ 公開すべきでない情報:
-- Google Apps Script デプロイID
-- スプレッドシートID
-- Google Cloud Project ID
-- OAuth クライアントシークレット
-- メール送信用アカウント情報
-```
+## 🔒 実装済みセキュリティ機能
 
-### 3. **安全な公開手順**
+### 1. XSS（クロスサイトスクリプティング）対策
+- HTMLエンティティエンコーディング
+- 入力値のサニタイゼーション
+- CSP（Content Security Policy）の適用
 
-#### ステップ1: 機密情報の分離
-```bash
-# 設定ファイルを環境変数化
-cp config.example.js config.js
-# config.js に実際のAPIエンドポイントを設定
-# config.js は .gitignore に含まれる
-```
+### 2. SQLインジェクション対策
+- 危険なパターンの検出・ブロック
+- パラメーター化クエリの使用
+- 入力検証の強化
 
-#### ステップ2: リポジトリ設定
-```bash
-# .gitignore の確認
-git status --ignored
+### 3. CSRF（クロスサイトリクエストフォージェリ）対策
+- リファラーチェックの実装
+- 許可されたドメインからのアクセスのみ受付
 
-# 機密ファイルが含まれていないことを確認
-git ls-files | grep -E "\.(gs|gscript|gsheet)$"
-```
+### 4. DoS攻撃対策
+- レート制限機能（1分間に最大5回まで）
+- リクエスト頻度の監視
+- 自動ブロック機能
 
-#### ステップ3: 段階的公開
-1. **プライベートリポジトリ**: 最初は非公開で作成
-2. **レビュー**: 機密情報の漏洩がないか再確認
-3. **公開**: 問題なければパブリックに変更
+### 5. 機密情報保護
+- 設定ファイルの環境変数化
+- APIエンドポイントの秘匿化
+- `.gitignore`による機密ファイル除外
 
-### 4. **推奨GitHub設定**
+## 🚨 脆弱性報告
 
-#### リポジトリ設定
-- **Security**: Dependabot alerts 有効化
-- **Branches**: main ブランチ保護
-- **Secrets**: 環境変数の設定
-- **Issues**: セキュリティ報告用テンプレート
+### 報告方法
+セキュリティ上の問題を発見した場合は、以下の方法でご報告ください：
 
-#### GitHub Actions での環境変数
-```yaml
-env:
-  GAS_API_URL: ${{ secrets.GAS_API_URL }}
-  SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
-```
+1. **緊急度が高い場合**: GitHubの[Security Advisory](../../security/advisories)を使用
+2. **一般的な問題**: [Issues](../../issues)でバグ報告テンプレートを使用
 
-### 5. **緊急時の対応**
+### 報告時の注意事項
+- 脆弱性の詳細を公開せず、まず開発チームに報告してください
+- 攻撃の概念実証（PoC）がある場合は、安全な方法で共有してください
+- 発見者のクレジット表記を希望する場合はお知らせください
 
-#### 機密情報が漏洩した場合
-1. **即座に新しいデプロイ**: Google Apps Script の再デプロイ
-2. **APIキーの無効化**: 古いエンドポイントの無効化
-3. **履歴の削除**: `git filter-branch` または BFG Repo-Cleaner 使用
-4. **GitHub Security**: セキュリティアドバイザリの発行
+## 🔧 セキュリティ設定ガイド
 
-#### コマンド例
-```bash
-# 機密ファイルの履歴削除
-git filter-branch --force --index-filter \
-  'git rm --cached --ignore-unmatch config.js' \
-  --prune-empty --tag-name-filter cat -- --all
-
-# 強制プッシュ（注意）
-git push origin --force --all
+### 推奨設定
+```javascript
+// config.js での推奨設定
+const CONFIG = {
+    // HTTPS使用を強制
+    FORCE_HTTPS: true,
+    
+    // レート制限設定
+    RATE_LIMIT: {
+        maxRequests: 5,
+        timeWindow: 60000 // 1分
+    },
+    
+    // 許可ドメイン設定
+    ALLOWED_DOMAINS: [
+        'your-domain.com',
+        'localhost'
+    ]
+};
 ```
 
-### 6. **継続的なセキュリティ**
+### セキュリティチェックリスト
+- [ ] config.jsが.gitignoreに含まれていることを確認
+- [ ] APIエンドポイントが適切に保護されていることを確認
+- [ ] レート制限が正常に動作することを確認
+- [ ] 入力検証が全てのフォームフィールドで実装されていることを確認
+- [ ] HTTPSでの運用を確認
 
-#### 定期チェック項目
+## 📋 定期的なセキュリティ確認
+
+### 月次チェック項目
 - [ ] 依存関係の脆弱性スキャン
-- [ ] アクセスログの監視
-- [ ] API使用量の監視
-- [ ] 不正アクセスの検出
+- [ ] アクセスログの確認
+- [ ] セキュリティ設定の見直し
 
-#### 監視ツール
-- GitHub Security Advisories
-- Dependabot
-- CodeQL analysis
-- NPM audit
+### 四半期チェック項目
+- [ ] セキュリティテストの実施
+- [ ] 侵入テストの検討
+- [ ] セキュリティポリシーの更新
+
+## 📚 参考資料
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Google Apps Script セキュリティガイド](https://developers.google.com/apps-script/guides/security)
+- [Web セキュリティ基礎](https://developer.mozilla.org/ja/docs/Web/Security)
 
 ---
 
-## 📞 緊急連絡先
-セキュリティインシデントが発生した場合は、リポジトリ管理者まで即座にご連絡ください。
+**最終更新**: 2025年8月20日  
+**バージョン**: 1.0.0

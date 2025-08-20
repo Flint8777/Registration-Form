@@ -40,35 +40,9 @@ class AccessibilityManager {
     }
 }
 
-// 設定ファイルの読み込み
-// 注意: config.js は実際の設定値を含むため .gitignore に含まれます
-// GitHub公開版では config.example.js をベースに config.js を作成してください
-
-// GitHub Pages デモモード判定
-const isGitHubPages = window.location.hostname.includes('github.io');
-
-let APP_CONFIG;
-try {
-    // 実際の設定ファイルから読み込み（GitHub非公開）
-    APP_CONFIG = CONFIG || {};
-} catch (error) {
-    if (isGitHubPages) {
-        console.log('🌐 GitHub Pages デモモードで動作中');
-        console.log('📝 このサイトはデモ用です。実際の予約機能を利用するには設定が必要です。');
-    } else {
-        console.warn('config.js が見つかりません。config.example.js をベースに config.js を作成してください。');
-    }
-
-    APP_CONFIG = {
-        API_URL: 'YOUR_GAS_DEPLOYMENT_URL_HERE',
-        MAX_PARTICIPANTS: 6,
-        TIMEOUT_MS: 30000
-    };
-}
-
 // 定数定義（DRY原則適用）
 const CONFIG = {
-    API_URL: APP_CONFIG.API_URL,
+    API_URL: 'https://script.google.com/macros/s/***REMOVED***/exec',
     STEPS: {
         BASIC_INFO: 1,
         WORKSHOP_DETAILS: 2,
@@ -112,87 +86,6 @@ const CONFIG = {
         FOCUSED: 'focused'
     }
 };
-
-// 設定の検証とセキュリティチェック
-function validateConfiguration() {
-    // GitHub Pages デモモードの場合は簡略化
-    if (isGitHubPages) {
-        if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
-            console.log('🌐 GitHub Pages デモモード: 予約機能は無効です');
-            console.log('✨ フォーム機能とUIをお試しいただけます');
-            console.log('📖 完全な機能については README をご覧ください');
-
-            // デモモード用の控えめな通知
-            showDemoModeNotification();
-            return true; // デモモードでは続行を許可
-        }
-    }
-
-    // APIエンドポイントの検証
-    if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GAS_DEPLOYMENT_URL_HERE') {
-        console.error('🚨 セキュリティ警告: API_URLが設定されていません');
-        console.warn('config.example.js をベースに config.js を作成し、実際のGoogle Apps ScriptのデプロイURLを設定してください');
-
-        // 開発者向けの詳細なガイダンス
-        const setupInstructions = `
-📋 セットアップ手順:
-1. config.example.js を config.js にコピー
-2. Google Apps Script でプロジェクトをデプロイ
-3. デプロイURLを config.js の API_URL に設定
-4. config.js は .gitignore に含まれるため GitHub に公開されません
-        `;
-        console.log(setupInstructions);
-
-        return false;
-    }
-
-    // URL形式の検証
-    try {
-        new URL(CONFIG.API_URL);
-    } catch (error) {
-        console.error('🚨 設定エラー: 無効なAPI_URL形式です', CONFIG.API_URL);
-        return false;
-    }
-
-    // Google Apps Script エンドポイントかどうかの確認
-    if (!CONFIG.API_URL.includes('script.google.com')) {
-        console.warn('⚠️ 警告: Google Apps Script以外のエンドポイントが設定されています');
-    }
-
-    console.log('✅ 設定の検証が完了しました');
-    return true;
-}
-
-// GitHub Pages デモモード用の通知表示
-function showDemoModeNotification() {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed; top: 0; left: 0; right: 0; 
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-        color: white; padding: 12px; text-align: center; 
-        font-weight: 500; z-index: 9999; font-size: 14px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    `;
-    notification.innerHTML = `
-        🌐 デモサイトです | ✨ フォーム機能をお試しください | 
-        📖 <a href="https://github.com/flint8777/TEST_KesenNuma-StarryNight" 
-           style="color: #ffd700; text-decoration: none;">完全版の設定方法はこちら</a>
-    `;
-
-    // ページの最上部に挿入
-    document.body.insertBefore(notification, document.body.firstChild);
-
-    // 10秒後にフェードアウト
-    setTimeout(() => {
-        notification.style.transition = 'opacity 0.5s ease';
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 500);
-    }, 10000);
-}
 
 // グローバル変数
 let currentStep = CONFIG.STEPS.BASIC_INFO;
@@ -333,10 +226,6 @@ function updateStep(step) {
     AccessibilityManager.announcePageChange(step);
     AccessibilityManager.updateProgressBar(step, CONFIG.STEPS.COMPLETION);
 
-    // bodyタグにステップクラスを追加（ヘッダー・タイトル非表示用）
-    document.body.className = document.body.className.replace(/\bstep-\d+\b/g, '');
-    document.body.classList.add(`step-${step}`);
-
     // ステップインジケーター更新
     for (let i = 1; i <= CONFIG.STEPS.COMPLETION; i++) {
         const stepElement = getElement(`#step-${i}`);
@@ -400,17 +289,7 @@ function updateNavigationButtons(step) {
 
     // 完了画面：ナビゲーションを非表示
     if (step === CONFIG.STEPS.COMPLETION) {
-        if (elements.navigation) {
-            elements.navigation.style.display = 'none';
-            elements.navigation.style.visibility = 'hidden';
-        }
-        // 個別のボタンも確実に非表示にする
-        [elements.backBtn, elements.nextBtn, elements.submitBtn].forEach(btn => {
-            if (btn) {
-                btn.classList.remove(CONFIG.CLASSES.VISIBLE);
-                btn.style.display = 'none';
-            }
-        });
+        if (elements.navigation) elements.navigation.style.display = 'none';
         return;
     }
 
@@ -428,7 +307,7 @@ function updateNavigationButtons(step) {
     // Step 2以降で最終入力ステップを計算
     const workshopParticipation = formData['ワークショップ参加'] || elements.workshopParticipation?.value;
     const planetariumIntent = formData['プラネタリウム鑑賞'] || elements.planetariumIntent?.value;
-    const lastDataStep = (workshopParticipation === 'はい')
+    const lastDataStep = (workshopParticipation === '参加する')
         ? ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.WORKSHOP_DETAILS)
         : ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.BASIC_INFO);
 
@@ -446,7 +325,7 @@ function previousStep() {
 
     if (currentStep === CONFIG.STEPS.PLANETARIUM_DETAILS) {
         const workshopParticipation = formData['ワークショップ参加'] || elements.workshopParticipation?.value;
-        const target = (workshopParticipation === 'はい') ? CONFIG.STEPS.WORKSHOP_DETAILS : CONFIG.STEPS.BASIC_INFO;
+        const target = (workshopParticipation === '参加する') ? CONFIG.STEPS.WORKSHOP_DETAILS : CONFIG.STEPS.BASIC_INFO;
         updateStep(target);
         return;
     }
@@ -514,7 +393,7 @@ async function nextStep() {
             });
 
             // 両方選択されている場合はワークショップから開始
-            if (workshopParticipation === 'はい') {
+            if (workshopParticipation === '参加する') {
                 console.log('ワークショップStep 2へ遷移（プラネタリウム意向:', planetariumIntent, '）');
                 await loadWorkshopParts(); // 内部でStep2へ遷移
                 setButtonLoading(elements.nextBtn, false);
@@ -585,7 +464,7 @@ function nextStep_old() {
         if (currentStep === CONFIG.STEPS.BASIC_INFO) {
             const workshopParticipation = elements.workshopParticipation?.value;
 
-            if (workshopParticipation === 'いいえ') {
+            if (workshopParticipation === '参加しない') {
                 updateStep(CONFIG.STEPS.CONFIRMATION);
                 generateConfirmationContent();
                 return;
@@ -646,7 +525,7 @@ function validateCurrentStep() {
     // ステップ2: ワークショップのみバリデーション
     if (currentStep === CONFIG.STEPS.WORKSHOP_DETAILS) {
         const workshopParticipation = elements.workshopParticipation?.value;
-        if (workshopParticipation === 'はい') {
+        if (workshopParticipation === '参加する') {
             const participantCount = document.getElementById('ワークショップ参加人数').value;
             const selectedPart = document.getElementById('予約する部').value;
             if (!participantCount || participantCount < 1) {
@@ -721,7 +600,7 @@ function saveCurrentStepData() {
             delete formData['プラネタリウム予約部'];
         }
         const workshopParticipation = elements.workshopParticipation?.value;
-        if (workshopParticipation !== 'はい') {
+        if (workshopParticipation !== '参加する') {
             delete formData['ワークショップ参加人数'];
             delete formData['予約する部'];
         }
@@ -740,23 +619,9 @@ function fetchWithJsonp(url) {
             resolve(data);
         };
 
-        // リファラー情報を追加（複数の方法で試行）
-        const currentUrl = window.location.href;
-        const separator = url.indexOf('?') >= 0 ? '&' : '?';
-        const urlWithReferrer = url + separator + 'callback=' + callbackName +
-            '&referrer=' + encodeURIComponent(currentUrl) +
-            '&ref=' + encodeURIComponent(currentUrl) +
-            '&source=' + encodeURIComponent(currentUrl);
-
-        console.log('=== JSONP リクエスト詳細 ===');
-        console.log('元のURL:', url);
-        console.log('現在のページURL:', currentUrl);
-        console.log('エンコード済みリファラー:', encodeURIComponent(currentUrl));
-        console.log('最終リクエストURL:', urlWithReferrer);
-
         // スクリプトタグを作成してJSONPリクエスト
         const script = document.createElement('script');
-        script.src = urlWithReferrer;
+        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
         script.onerror = function () {
             delete window[callbackName];
             document.body.removeChild(script);
@@ -781,28 +646,24 @@ async function loadWorkshopParts() {
     try {
         setLoading(true);
 
-        // iframe環境またはGitHubPages環境での制限を検知
+        // iframe環境での制限を検知
         const isIframe = window.self !== window.top;
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        const shouldUseJsonp = isIframe || isGitHubPages;
-        console.log('iframe環境:', isIframe, 'GitHubPages環境:', isGitHubPages, 'JSONP使用:', shouldUseJsonp);
+        console.log('iframe環境:', isIframe);
 
         let data;
 
         // キャッシュ回避のためタイムスタンプを追加
         const timestamp = new Date().getTime();
-        const apiUrl = `${CONFIG.API_URL}?action=getWorkshopParts&t=${timestamp}`;
+        const apiUrl = `${CONFIG.API_URL}?action=getParts&t=${timestamp}`;
 
-        if (shouldUseJsonp) {
-            // iframe環境またはGitHubPages環境ではJSONPを使用
-            console.log('CORS制限回避のためJSONPを使用:', apiUrl);
+        if (isIframe) {
+            // iframe環境ではJSONPを使用
+            console.log('iframe環境のためJSONPを使用');
             data = await fetchWithJsonp(apiUrl);
-            console.log('JSONP応答データ:', data);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const apiUrlWithReferrer = apiUrl + (apiUrl.indexOf('?') >= 0 ? '&' : '?') + 'referrer=' + encodeURIComponent(window.location.href);
-            const response = await fetch(apiUrlWithReferrer, {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 cache: 'no-cache', // キャッシュを無効化
                 headers: {
@@ -842,29 +703,7 @@ async function loadWorkshopParts() {
 
     } catch (error) {
         console.error('部の情報取得エラー:', error);
-
-        // APIが実装されていない場合のフォールバック：静的データを使用
-        console.log('APIが実装されていないため、静的データを使用します');
-        workshopParts = [
-            { name: '第1部 (13:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第2部 (14:00集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第3部 (14:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第4部 (15:00集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第5部 (15:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第6部 (16:00集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第7部 (16:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第8部 (17:00集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第9部 (17:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第10部 (18:00集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第11部 (18:30集合)', capacity: 5, reserved: 0, remaining: 5 },
-            { name: '第12部 (19:00集合)', capacity: 5, reserved: 0, remaining: 5 }
-        ];
-
-        // 初期状態で一度更新（参加人数0でも全部表示される）
-        updatePartOptions();
-        // ワークショップ参加人数の選択肢を来場人数に基づいて制限
-        updateWorkshopParticipantOptions();
-        updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
+        showResult('部の情報を取得できませんでした。しばらく後にもう一度お試しください。', false);
         setLoading(false);
     }
 }
@@ -874,34 +713,20 @@ async function loadPlanetariumParts() {
     try {
         setLoading(true);
 
-        // iframe環境またはGitHubPages環境での制限を検知
+        // iframe環境での制限を検知
         const isIframe = window.self !== window.top;
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        const shouldUseJsonp = isIframe || isGitHubPages;
-        console.log('iframe環境:', isIframe, 'GitHubPages環境:', isGitHubPages, 'JSONP使用:', shouldUseJsonp);
+        console.log('iframe環境:', isIframe);
 
         let data;
 
-        // キャッシュ回避のためタイムスタンプを追加
-        const timestamp = new Date().getTime();
-
-        if (shouldUseJsonp) {
-            // iframe環境またはGitHubPages環境ではJSONPを使用
-            console.log('CORS制限回避のためJSONPを使用 (プラネタリウム):', `${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`);
-            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}`);
-            console.log('JSONP応答データ (プラネタリウム):', data);
+        if (isIframe) {
+            // iframe環境ではJSONPを使用
+            console.log('iframe環境のためJSONPを使用');
+            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
         } else {
             // 通常環境ではfetchを使用
             console.log('通常環境のためfetchを使用');
-            const planetariumApiUrl = `${CONFIG.API_URL}?action=getPlanetariumParts&t=${timestamp}&referrer=${encodeURIComponent(window.location.href)}`;
-            const response = await fetch(planetariumApiUrl, {
-                method: 'GET',
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
+            const response = await fetch(`${CONFIG.API_URL}?action=getPlanetariumParts`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -932,9 +757,9 @@ async function loadPlanetariumParts() {
         // APIが実装されていない場合のフォールバック：静的データを使用
         console.log('APIが実装されていないため、静的データを使用します');
         planetariumParts = [
-            { name: '第1部 (13:30上映開始)', remaining: 20 },
-            { name: '第2部 (14:30上映開始)', remaining: 20 },
-            { name: '第3部 (15:30上映開始)', remaining: 20 }
+            { name: '第1部 (13:30~14:00)', remaining: 30 },
+            { name: '第2部 (14:30~15:00)', remaining: 30 },
+            { name: '第3部 (15:30~16:00)', remaining: 30 }
         ];
 
         updatePlanetariumPartOptions();
@@ -1100,7 +925,7 @@ function generateConfirmationContent() {
                 <div><strong>ワークショップ参加:</strong> ${formData['ワークショップ参加'] || ''}</div>
     `;
 
-    if (formData['ワークショップ参加'] === 'はい') {
+    if (formData['ワークショップ参加'] === '参加する') {
         content += `
                 <div><strong>ワークショップ参加人数:</strong> ${formData['ワークショップ参加人数'] || ''}人</div>
                 <div><strong>予約する部:</strong> ${formData['予約する部'] || ''}</div>
@@ -1161,13 +986,6 @@ async function submitForm() {
             submitFormElement.appendChild(input);
         });
 
-        // Referrer情報を追加
-        const referrerInput = document.createElement('input');
-        referrerInput.type = 'hidden';
-        referrerInput.name = 'referrer';
-        referrerInput.value = window.location.href;
-        submitFormElement.appendChild(referrerInput);
-
         document.body.appendChild(submitFormElement);
 
         // iframe読み込み完了時の処理
@@ -1219,6 +1037,27 @@ function resetForm() {
     updateStep(CONFIG.STEPS.BASIC_INFO);
     if (elements.navigation) elements.navigation.style.display = 'flex';
 }
+
+// ワークショップ参加選択の変更監視
+document.getElementById('ワークショップ参加').addEventListener('change', function () {
+    const participationValue = this.value;
+    if (participationValue === '参加しない') {
+        // 観望会のみの場合、ワークショップ関連データをクリア
+        delete formData['ワークショップ参加人数'];
+        delete formData['予約する部'];
+    }
+});
+
+// 入力フィールドのアニメーション
+document.querySelectorAll('.form-control').forEach(input => {
+    input.addEventListener('focus', function () {
+        this.parentElement.classList.add('focused');
+    });
+
+    input.addEventListener('blur', function () {
+        this.parentElement.classList.remove('focused');
+    });
+});
 
 // iOS専用の軽量背景表示関数
 function ensureBackgroundDisplay() {
@@ -1300,6 +1139,27 @@ function setupEventListeners() {
 
         // submitForm関数を呼び出し（内部でローディング管理される）
         await submitForm();
+    });
+
+    // ワークショップ参加選択の変更監視
+    elements.workshopParticipation?.addEventListener('change', function () {
+        const participationValue = this.value;
+        if (participationValue === '参加しない') {
+            // 観望会のみの場合、ワークショップ関連データをクリア
+            delete formData['ワークショップ参加人数'];
+            delete formData['予約する部'];
+        }
+    });
+
+    // 入力フィールドのアニメーション
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('focus', function () {
+            this.parentElement.classList.add(CONFIG.CLASSES.FOCUSED);
+        });
+
+        input.addEventListener('blur', function () {
+            this.parentElement.classList.remove(CONFIG.CLASSES.FOCUSED);
+        });
     });
 
     // メールアドレスのリアルタイムバリデーション
@@ -1384,7 +1244,7 @@ function setupEventListeners() {
     // ワークショップ参加の表示制御（ステップ2のセクション）
     elements.workshopParticipation?.addEventListener('change', function (event) {
         event.stopPropagation(); // イベントの伝播を停止
-        const isJoin = this.value === 'はい';
+        const isJoin = this.value === '参加する';
         const workshopSection = document.getElementById('workshop-section');
         if (workshopSection) {
             workshopSection.classList.toggle('show', isJoin);
@@ -1434,60 +1294,15 @@ function setupEventListeners() {
         }
     });
 
-    // 初期表示時の状態を直接設定（dispatchEventを使わない）
+    // 初期表示時にも現在の選択状態を反映
     if (elements.transportMode) {
-        const isCar = elements.transportMode.value === '車';
-        if (elements.carCountGroup) {
-            elements.carCountGroup.classList.toggle('show', isCar);
-            elements.carCountGroup.setAttribute('aria-hidden', isCar ? 'false' : 'true');
-        }
-        if (elements.carCount) {
-            if (isCar) {
-                elements.carCount.setAttribute('required', 'required');
-            } else {
-                elements.carCount.removeAttribute('required');
-            }
-        }
+        elements.transportMode.dispatchEvent(new Event('change'));
     }
-
     if (elements.workshopParticipation) {
-        const isJoin = elements.workshopParticipation.value === 'はい';
-        const workshopSection = document.getElementById('workshop-section');
-        if (workshopSection) {
-            workshopSection.classList.toggle('show', isJoin);
-            workshopSection.setAttribute('aria-hidden', isJoin ? 'false' : 'true');
-        }
-        const wsCount = document.getElementById('ワークショップ参加人数');
-        const wsPart = document.getElementById('予約する部');
-        if (wsCount && wsPart) {
-            if (isJoin) {
-                wsCount.setAttribute('required', 'required');
-                wsPart.setAttribute('required', 'required');
-            } else {
-                wsCount.removeAttribute('required');
-                wsPart.removeAttribute('required');
-            }
-        }
+        elements.workshopParticipation.dispatchEvent(new Event('change'));
     }
-
     if (elements.planetariumIntent) {
-        const isYes = elements.planetariumIntent.value === 'はい';
-        const section = document.getElementById('planetarium-section');
-        if (section) {
-            section.classList.toggle('show', isYes);
-            section.setAttribute('aria-hidden', isYes ? 'false' : 'true');
-        }
-        const pCount = document.getElementById('プラネタリウム参加人数');
-        const pPart = document.getElementById('プラネタリウム予約部');
-        if (pCount && pPart) {
-            if (isYes) {
-                pCount.setAttribute('required', 'required');
-                pPart.setAttribute('required', 'required');
-            } else {
-                pCount.removeAttribute('required');
-                pPart.removeAttribute('required');
-            }
-        }
+        elements.planetariumIntent.dispatchEvent(new Event('change'));
     }
 }
 
@@ -1534,8 +1349,8 @@ function setupEmailValidation() {
 function initializeAttendanceCount() {
     const attendanceSelect = document.getElementById('来場人数');
     if (attendanceSelect) {
-        // 1～20人のオプションを生成
-        for (let i = 1; i <= 20; i++) {
+        // 1～100人のオプションを生成
+        for (let i = 1; i <= 100; i++) {
             const option = document.createElement('option');
             option.value = i.toString();
             option.textContent = `${i}人`;
@@ -1586,60 +1401,40 @@ function updateWorkshopParticipantOptions() {
 
     // 来場人数を取得
     const totalAttendance = parseInt(formData['来場人数'] || elements.attendanceCount?.value || 0);
-    const maxCount = totalAttendance > 0 ? Math.min(totalAttendance, 5) : 5;
 
-    console.log(`ワークショップ参加人数の選択肢を再生成: 最大${maxCount}人（来場人数: ${totalAttendance}人）`);
+    console.log(`ワークショップ参加人数の選択肢を更新: 来場人数${totalAttendance}人に基づいて制限`);
 
-    // 現在の選択を保持
-    const currentValue = wsSelect.value;
+    // 既存のオプションを確認して制限
+    const options = wsSelect.querySelectorAll('option');
+    options.forEach(option => {
+        if (option.value && option.value !== '') {
+            const optionValue = parseInt(option.value);
+            if (totalAttendance > 0 && optionValue > totalAttendance) {
+                option.disabled = true;
+                option.textContent = `${optionValue}人（来場人数を超過）`;
+                option.style.color = '#999';
+            } else {
+                option.disabled = false;
+                option.textContent = `${optionValue}人`;
+                option.style.color = '';
+            }
+        }
+    });
 
-    // 既存のオプションをクリア（placeholder以外）
-    while (wsSelect.children.length > 1) {
-        wsSelect.removeChild(wsSelect.lastChild);
-    }
-
-    // 新しいオプションを生成（1～maxCountまで）
-    for (let i = 1; i <= maxCount; i++) {
-        const option = document.createElement('option');
-        option.value = i.toString();
-        option.textContent = `${i}人`;
-        wsSelect.appendChild(option);
-    }
-
-    // 可能であれば以前の選択を復元、不可能な場合はリセット
-    if (currentValue && parseInt(currentValue) <= maxCount) {
-        wsSelect.value = currentValue;
-    } else if (currentValue && totalAttendance > 0) {
-        wsSelect.value = '';
-        console.log(`ワークショップ参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
+    // 現在選択されている値が制限を超えている場合はリセット
+    if (wsSelect.value && totalAttendance > 0) {
+        const currentValue = parseInt(wsSelect.value);
+        if (currentValue > totalAttendance) {
+            wsSelect.value = '';
+            console.log(`ワークショップ参加人数をリセット: ${currentValue}人は来場人数${totalAttendance}人を超過`);
+        }
     }
 }
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
-    // 🔒 セキュリティ: 設定の検証を最初に実行
-    const configValid = validateConfiguration();
-    if (!configValid && !isGitHubPages) {
-        console.error('❌ アプリケーションの初期化が中断されました: 設定に問題があります');
-
-        // ユーザーに分かりやすいエラーメッセージを表示
-        const errorMessage = document.createElement('div');
-        errorMessage.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; 
-            background: #ff4757; color: white; padding: 15px; 
-            text-align: center; font-weight: bold; z-index: 9999;
-        `;
-        errorMessage.innerHTML = '⚙️ システム設定を確認してください。詳細はコンソールをご確認ください。';
-        document.body.insertBefore(errorMessage, document.body.firstChild);
-
-        return; // 初期化を中断
-    }
-
     // UIエレメントを初期化
     initializeElements();
-
-    // 初期ステップのbodyクラスを設定
-    document.body.classList.add(`step-${CONFIG.STEPS.BASIC_INFO}`);
 
     // 来場人数のオプションを生成
     initializeAttendanceCount();
