@@ -1,5 +1,13 @@
 // 気仙沼星空観望会 予約システム - メインスクリプト
 
+// Analytics初期化（プロダクション環境でのみ有効）
+let analytics = null;
+if (window.location.hostname !== 'localhost') {
+    // 実際のGoogle Analytics ID を設定する場合は以下を変更
+    // analytics = new AnalyticsManager('G-XXXXXXXXXX');
+    console.log('Analytics: Production environment detected, but GA ID not configured');
+}
+
 // アクセシビリティ管理クラス
 class AccessibilityManager {
     static announcePageChange(stepNumber) {
