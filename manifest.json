@@ -1,0 +1,48 @@
+{
+    "name": "気仙沼星空観望会 予約システム",
+    "short_name": "気仙沼星空観望会",
+    "description": "気仙沼で開催される星空観望会への参加予約システム",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0f1419",
+    "theme_color": "#4299e1",
+    "orientation": "portrait-primary",
+    "scope": "./",
+    "lang": "ja",
+    "dir": "ltr",
+    "categories": [
+        "education",
+        "lifestyle",
+        "entertainment"
+    ],
+    "icons": [
+        {
+            "src": "Images/シンボルマーク.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "Images/シンボルマーク.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "Images/シンボルマーク.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "予約システム メイン画面"
+        }
+    ],
+    "features": [
+        "Cross Platform",
+        "fast",
+        "simple"
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}
