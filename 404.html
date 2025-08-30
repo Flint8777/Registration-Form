@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ページが見つかりません - 気仙沼星空観望会</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a252f 50%, #2d3748 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 星空背景効果 */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        .star:nth-child(1) {
+            top: 20%;
+            left: 20%;
+            width: 2px;
+            height: 2px;
+            animation-delay: 0s;
+        }
+
+        .star:nth-child(2) {
+            top: 30%;
+            left: 80%;
+            width: 1px;
+            height: 1px;
+            animation-delay: 0.5s;
+        }
+
+        .star:nth-child(3) {
+            top: 70%;
+            left: 30%;
+            width: 3px;
+            height: 3px;
+            animation-delay: 1s;
+        }
+
+        .star:nth-child(4) {
+            top: 40%;
+            left: 60%;
+            width: 1px;
+            height: 1px;
+            animation-delay: 1.5s;
+        }
+
+        .star:nth-child(5) {
+            top: 80%;
+            left: 70%;
+            width: 2px;
+            height: 2px;
+            animation-delay: 2s;
+        }
+
+        .star:nth-child(6) {
+            top: 15%;
+            left: 50%;
+            width: 1px;
+            height: 1px;
+            animation-delay: 0.3s;
+        }
+
+        .star:nth-child(7) {
+            top: 60%;
+            left: 10%;
+            width: 2px;
+            height: 2px;
+            animation-delay: 0.8s;
+        }
+
+        .star:nth-child(8) {
+            top: 25%;
+            left: 90%;
+            width: 1px;
+            height: 1px;
+            animation-delay: 1.3s;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 1;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #4299e1, #805ad5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        .error-title {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+        }
+
+        .error-description {
+            font-size: 1.1rem;
+            color: #a0aec0;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            object-fit: contain;
+            filter: brightness(0.9);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4299e1, #805ad5);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #e2e8f0;
+            border: 2px solid #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+            color: white;
+        }
+
+        .search-box {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #4a5568;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .search-input::placeholder {
+            color: #a0aec0;
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+
+            .error-title {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stars">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+    </div>
+
+    <div class="container">
+        <img src="Images/観望会ロゴタイプ_黒.png" alt="気仙沼星空観望会ロゴ" class="logo">
+
+        <div class="error-code">404</div>
+
+        <h1 class="error-title">ページが見つかりません</h1>
+
+        <p class="error-description">
+            お探しのページは移動されたか、削除された可能性があります。<br>
+            星空観望会の予約は下記のボタンからお進みください。
+        </p>
+
+        <div class="actions">
+            <a href="index.html" class="btn btn-primary">
+                🌟 予約ページに戻る
+            </a>
+
+            <button class="btn btn-secondary" onclick="history.back()">
+                ← 前のページに戻る
+            </button>
+        </div>
+
+        <div class="search-box">
+            <p style="color: #a0aec0; font-size: 0.9rem;">お探しのページが見つからない場合：</p>
+            <input type="text" class="search-input" placeholder="キーワードで検索..." id="searchInput">
+            <button class="btn btn-secondary" onclick="performSearch()">検索</button>
+        </div>
+    </div>
+
+    <script>
+        // 簡単な検索機能
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                // Google検索に転送
+                const searchUrl = `https://www.google.com/search?q=site:flint8777.github.io/TEST_KesenNuma-StarryNight/ ${encodeURIComponent(searchTerm)}`;
+                window.open(searchUrl, '_blank');
+            }
+        }
+
+        // エンターキーで検索
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 自動リダイレクト（オプション）
+        setTimeout(() => {
+            if (confirm('5秒後に予約ページに自動転送されます。今すぐ移動しますか？')) {
+                window.location.href = 'index.html';
+            }
+        }, 5000);
+    </script>
+</body>
+
+</html>

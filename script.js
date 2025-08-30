@@ -74,7 +74,8 @@ const CONFIG = {
         PLANETARIUM_PART: '#プラネタリウム予約部',
         TRANSPORT_MODE: '#当日の交通手段',
         CAR_COUNT_GROUP: '#car-count-group',
-        CAR_COUNT: '#お車台数'
+        CAR_COUNT: '#お車台数',
+        EVENT_SOURCE: '#イベント認知経路'
     },
     CLASSES: {
         ACTIVE: 'active',
@@ -154,7 +155,8 @@ function initializeElements() {
         planetariumPart: getElement(CONFIG.SELECTORS.PLANETARIUM_PART),
         transportMode: getElement(CONFIG.SELECTORS.TRANSPORT_MODE),
         carCountGroup: getElement(CONFIG.SELECTORS.CAR_COUNT_GROUP),
-        carCount: getElement(CONFIG.SELECTORS.CAR_COUNT)
+        carCount: getElement(CONFIG.SELECTORS.CAR_COUNT),
+        eventSource: getElement(CONFIG.SELECTORS.EVENT_SOURCE)
     };
 }
 
