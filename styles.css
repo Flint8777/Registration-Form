@@ -1326,3 +1326,24 @@ body.step-2 .main-form-title,
 body.step-3 .main-form-title {
     display: none !important;
 }
+
+/* 無効化されたオプションのスタイル */
+select option:disabled {
+    color: #999 !important;
+    background-color: #f5f5f5 !important;
+    font-style: italic;
+}
+
+/* ブラウザ別の無効化オプション対応 */
+select option[disabled] {
+    color: #999 !important;
+    background-color: #f5f5f5 !important;
+}
+
+/* Firefox対応 */
+@-moz-document url-prefix() {
+    select option:disabled {
+        color: #999;
+        background-color: #f5f5f5;
+    }
+}
