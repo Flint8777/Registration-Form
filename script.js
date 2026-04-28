@@ -613,38 +613,27 @@ function saveCurrentStepData() {
     }
 }
 
-// iframe環境でのJSONP対応
-function fetchWithJsonp(url) {
-    return new Promise((resolve, reject) => {
-        const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-
-        // グローバルコールバック関数を作成
-        window[callbackName] = function (data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            resolve(data);
-        };
-
-        // スクリプトタグを作成してJSONPリクエスト
-        const script = document.createElement('script');
-        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
-        script.onerror = function () {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            reject(new Error('JSONP request failed'));
-        };
-
-        document.body.appendChild(script);
-
-        // タイムアウト処理
-        setTimeout(() => {
-            if (window[callbackName]) {
-                delete window[callbackName];
-                document.body.removeChild(script);
-                reject(new Error('JSONP request timeout'));
-            }
-        }, 10000);
-    });
+// GAS の GET エンドポイントから JSON を取得する
+// 旧実装は <script> タグ経由の JSONP を採用しており、レスポンスを任意 JS として実行していた。
+// GAS 側は応答時に Access-Control-Allow-Origin を付与しているため、通常の fetch で十分。
+// 失敗時は何も実行しないことが保証され、JSONP のような任意コード実行リスクが消える。
+async function fetchJson(url, { timeoutMs = 15000 } = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        }
+        return await res.json();
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 // ワークショップの部情報を取得
@@ -652,46 +641,20 @@ async function loadWorkshopParts() {
     try {
         setLoading(true);
 
-        // iframe環境での制限を検知
-        const isIframe = window.self !== window.top;
-        console.log('iframe環境:', isIframe);
-
-        let data;
-
         // キャッシュ回避のためタイムスタンプを追加
         const timestamp = new Date().getTime();
         const apiUrl = `${CONFIG.API_URL}?action=getParts&t=${timestamp}`;
+        const data = await fetchJson(apiUrl);
 
-        if (isIframe) {
-            // iframe環境ではJSONPを使用
-            console.log('iframe環境のためJSONPを使用');
-            data = await fetchWithJsonp(apiUrl);
-        } else {
-            // CORS問題回避のため、通常環境でもJSONPを使用
-            console.log('CORS回避のためJSONPを使用');
-            data = await fetchWithJsonp(apiUrl);
-        }
-
-        console.log('APIレスポンス全体:', data); // デバッグ用
-
-        // APIレスポンスの成功/失敗を確認
         if (!data.success) {
             throw new Error(data.error || '部の情報取得に失敗しました');
         }
 
         workshopParts = data.data || [];
-
-        console.log('取得した部の情報:', workshopParts); // デバッグ用
-        console.log('部の数:', workshopParts.length); // デバッグ用
-
-        // 残席数の詳細ログ出力
-        workshopParts.forEach(part => {
-            console.log(`🎯 ${part.name}: 定員${part.capacity}席, 予約済み${part.reserved}席, 残席${part.remaining}席`);
-        });
+        console.log('部の数:', workshopParts.length);
 
         // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePartOptions();
-        // ワークショップ参加人数の選択肢を来場人数に基づいて制限
         updateWorkshopParticipantOptions();
         updateStep(CONFIG.STEPS.WORKSHOP_DETAILS);
         setLoading(false);
@@ -708,37 +671,16 @@ async function loadPlanetariumParts() {
     try {
         setLoading(true);
 
-        // iframe環境での制限を検知
-        const isIframe = window.self !== window.top;
-        console.log('iframe環境:', isIframe);
+        const data = await fetchJson(`${CONFIG.API_URL}?action=getPlanetariumParts`);
 
-        let data;
-
-        if (isIframe) {
-            // iframe環境ではJSONPを使用
-            console.log('iframe環境のためJSONPを使用');
-            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
-        } else {
-            // CORS問題回避のため、通常環境でもJSONPを使用
-            console.log('CORS回避のためJSONPを使用');
-            data = await fetchWithJsonp(`${CONFIG.API_URL}?action=getPlanetariumParts`);
-        }
-
-        console.log('プラネタリウムAPIレスポンス全体:', data); // デバッグ用
-
-        // APIレスポンスの成功/失敗を確認
         if (!data.success) {
             throw new Error(data.error || 'プラネタリウム部の情報取得に失敗しました');
         }
 
         planetariumParts = data.data || [];
+        console.log('プラネタリウム部の数:', planetariumParts.length);
 
-        console.log('取得したプラネタリウム部の情報:', planetariumParts); // デバッグ用
-        console.log('プラネタリウム部の数:', planetariumParts.length); // デバッグ用
-
-        // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePlanetariumPartOptions();
-        // プラネタリウム参加人数を来場人数に基づいて再生成
         initializePlanetariumCount();
         setLoading(false);
 

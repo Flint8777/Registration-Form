@@ -47,7 +47,6 @@ function setupEnvironmentVariables() {
         'MAX_NAME_LENGTH': '50',
         'MAX_EMAIL_LENGTH': '100',
         'ENABLE_XSS_PROTECTION': 'true',
-        'ENABLE_SQL_INJECTION_PROTECTION': 'true',
         'BLOCKED_PATTERNS': blockedPatterns,
 
         // メール設定
@@ -69,7 +68,7 @@ function checkEnvironmentVariables() {
         'ENABLE_RATE_LIMIT', 'RATE_LIMIT_PER_HOUR', 'RATE_LIMIT_PER_DAY',
         'RESERVATION_LIMIT_PER_DAY', 'RATE_LIMIT_EXCLUDE_ACTIONS',
         'ENABLE_INPUT_VALIDATION', 'MAX_NAME_LENGTH', 'MAX_EMAIL_LENGTH',
-        'ENABLE_XSS_PROTECTION', 'ENABLE_SQL_INJECTION_PROTECTION', 'BLOCKED_PATTERNS',
+        'ENABLE_XSS_PROTECTION', 'BLOCKED_PATTERNS',
         'EMAIL_FROM_NAME', 'EMAIL_REPLY_TO', 'ADMIN_EMAIL'
     ];
     keys.forEach(k => {
@@ -128,12 +127,11 @@ function enableInputValidation() {
     console.log('入力検証を有効化しました');
 }
 
-function adjustSecuritySettings(enableXSS = true, enableSQLInjection = true, maxNameLength = 50, maxEmailLength = 100) {
+function adjustSecuritySettings(enableXSS = true, maxNameLength = 50, maxEmailLength = 100) {
     PropertiesService.getScriptProperties().setProperties({
         'ENABLE_XSS_PROTECTION': enableXSS.toString(),
-        'ENABLE_SQL_INJECTION_PROTECTION': enableSQLInjection.toString(),
         'MAX_NAME_LENGTH': maxNameLength.toString(),
         'MAX_EMAIL_LENGTH': maxEmailLength.toString()
     });
-    console.log(`セキュリティ設定: XSS=${enableXSS}, SQLi=${enableSQLInjection}, 名前=${maxNameLength}, メール=${maxEmailLength}`);
+    console.log(`セキュリティ設定: XSS=${enableXSS}, 名前=${maxNameLength}, メール=${maxEmailLength}`);
 }

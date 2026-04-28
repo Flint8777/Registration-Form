@@ -4,6 +4,20 @@
  */
 
 /**
+ * 文字列を HTML コンテキスト用にエスケープする
+ * < > & " ' を実体参照に変換し、属性値や本文に含めても XSS にならない形にする
+ */
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * メールアドレスをログ用にマスクする
  * 例: yamada.taro@example.com → y****o@e****e.com
  */
@@ -86,7 +100,6 @@ function getConfig() {
         MAX_NAME_LENGTH: parseInt(getEnvironmentVariable('MAX_NAME_LENGTH', '50')),
         MAX_EMAIL_LENGTH: parseInt(getEnvironmentVariable('MAX_EMAIL_LENGTH', '100')),
         ENABLE_XSS_PROTECTION: getEnvironmentVariable('ENABLE_XSS_PROTECTION', 'true') === 'true',
-        ENABLE_SQL_INJECTION_PROTECTION: getEnvironmentVariable('ENABLE_SQL_INJECTION_PROTECTION', 'true') === 'true',
         BLOCKED_PATTERNS: getEnvironmentVariable('BLOCKED_PATTERNS', '').split(',').filter(pattern => pattern.trim()),
 
         // その他設定
@@ -480,48 +493,11 @@ function sanitizeInput(input) {
     }
 }
 
-/**
- * SQLインジェクション対策
- */
-function checkSQLInjection(input) {
-    if (!input || typeof input !== 'string') {
-        return { valid: true };
-    }
-
-    const config = getConfig();
-
-    if (!config.ENABLE_SQL_INJECTION_PROTECTION) {
-        return { valid: true };
-    }
-
-    try {
-        const sqlPatterns = [
-            /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC)\b)/gi,
-            /(UNION\s+SELECT)/gi,
-            /(\s+OR\s+\d+\s*=\s*\d+)/gi,
-            /(\s+AND\s+\d+\s*=\s*\d+)/gi,
-            /(;|\-\-|\/\*|\*\/)/g,
-            /(SCRIPT|IFRAME|OBJECT|EMBED|APPLET)/gi
-        ];
-
-        for (const pattern of sqlPatterns) {
-            if (pattern.test(input)) {
-                return {
-                    valid: false,
-                    reason: 'SQLインジェクション疑い',
-                    details: `危険なパターンが検出されました: ${pattern}`,
-                    input: input.substring(0, 100) // 最初の100文字のみログ
-                };
-            }
-        }
-
-        return { valid: true };
-
-    } catch (error) {
-        console.error('SQLインジェクションチェックエラー:', error);
-        return { valid: true }; // エラー時は通す
-    }
-}
+// 注: 以前は checkSQLInjection() で SELECT/INSERT/OR/AND 等のキーワードを正規表現で
+// 拒否していたが、Spreadsheet API には SQL は存在しないため原理的に SQLi は発生しない。
+// その上で「Or」を含む氏名（"Olor" 等）や、住所中の英単語が誤検知される副作用が大きい。
+// 同様に SCRIPT/IFRAME 等の HTML 関連語の入力時拒否は出力エンコーディングの責務であり、
+// 入力時に弾く設計は不要かつ有害。よってこの関数と関連設定を削除した。
 
 /**
  * ブロックパターンチェック
@@ -608,13 +584,6 @@ function validateInput(fieldName, value, fieldType = 'text') {
             };
         }
 
-        // SQLインジェクションチェック
-        const sqlCheck = checkSQLInjection(stringValue);
-        if (!sqlCheck.valid) {
-            console.warn('SQLインジェクション疑い:', sqlCheck);
-            return sqlCheck;
-        }
-
         // ブロックパターンチェック
         const patternCheck = checkBlockedPatterns(stringValue);
         if (!patternCheck.valid) {
@@ -646,11 +615,12 @@ function validateInput(fieldName, value, fieldType = 'text') {
         };
 
     } catch (error) {
+        // fail-closed: 検証中の例外時は valid:false で扱い、攻撃的入力を素通りさせない
         console.error(`入力検証エラー (${fieldName}):`, error);
         return {
-            valid: true, // エラー時はサービス継続性を優先
-            sanitizedValue: value,
-            error: error.message
+            valid: false,
+            reason: 'validation_internal_error',
+            details: '入力データの検証中にエラーが発生しました。入力を見直してください。'
         };
     }
 }
@@ -740,11 +710,11 @@ function validateFormData(formData) {
         };
 
     } catch (error) {
+        // fail-closed: 検証ロジック自体が落ちた場合は valid:false で扱う
         console.error('フォームデータ検証エラー:', error);
         return {
-            valid: true, // エラー時はサービス継続性を優先
-            sanitizedData: formData,
-            error: error.message
+            valid: false,
+            errors: ['入力データの検証中にエラーが発生しました。時間をおいて再度お試しください。']
         };
     }
 }
@@ -779,19 +749,10 @@ function doGet(e) {
     try {
         // パラメータを取得
         const action = e.parameter.action;
-        const callback = e.parameter.callback; // JSONP用コールバック
 
-        console.log('API呼び出し - Action:', action, 'Parameters:', e.parameter);
-
-        // リクエストヘッダーのデバッグ情報を出力
-        console.log('=== リクエスト情報 詳細 ===');
-        console.log('全パラメータ:', JSON.stringify(e.parameter, null, 2));
+        console.log('API呼び出し - Action:', action);
         console.log('Referrer:', e.parameter.referrer || 'なし');
-        console.log('User-Agent:', e.parameter['User-Agent'] || 'なし');
-        console.log('Callback:', e.parameter.callback || 'なし');
-
-        // パラメータのキー一覧を確認
-        console.log('パラメータのキー一覧:', Object.keys(e.parameter || {}));
+        // PII保護のため User-Agent / 全パラメータの値そのままダンプは行わない
 
         // リファラーチェック実行
         const referrerCheck = validateReferrer(e);
@@ -818,20 +779,11 @@ function doGet(e) {
                 },
                 timestamp: new Date().toISOString()
             };
-
-            // JSONP対応
-            if (callback) {
-                const jsonpResponse = `${callback}(${JSON.stringify(errorData)});`;
-                return ContentService
-                    .createTextOutput(jsonpResponse)
-                    .setMimeType(ContentService.MimeType.JAVASCRIPT);
-            }
-
-            // 通常のエラーレスポンス
-            const output = ContentService
-                .createTextOutput(JSON.stringify(errorData))
-                .setMimeType(ContentService.MimeType.JSON);
-            return setCorsHeaders(output);
+            return setCorsHeaders(
+                ContentService
+                    .createTextOutput(JSON.stringify(errorData))
+                    .setMimeType(ContentService.MimeType.JSON)
+            );
         }
 
         // CORS対応とJSON出力設定
@@ -982,40 +934,26 @@ function doGet(e) {
         // レート制限カウンタを更新（成功時のみ）
         incrementRateLimit(clientIP);
 
-        // レスポンス作成（JSONP対応）
         const responseData = {
             success: true,
             data: result,
             timestamp: new Date().toISOString()
         };
-
-        // JSONP対応
-        if (callback) {
-            return createJsonpResponse(responseData, callback);
-        }
-
-        // 通常のJSON レスポンス
-        const output = ContentService
-            .createTextOutput(JSON.stringify(responseData))
-            .setMimeType(ContentService.MimeType.JSON);
-
-        return setCorsHeaders(output);
+        return setCorsHeaders(
+            ContentService
+                .createTextOutput(JSON.stringify(responseData))
+                .setMimeType(ContentService.MimeType.JSON)
+        );
 
     } catch (error) {
         console.error('API処理エラー:', error);
 
+        // 内部メッセージはユーザに見せず一般化（記事「エラーメッセージで内部情報を漏らすな」）
         const errorData = {
             success: false,
-            error: error.message,
+            error: 'リクエストの処理に失敗しました',
             timestamp: new Date().toISOString()
         };
-
-        // JSONP対応
-        if (e.parameter.callback) {
-            return createJsonpResponse(errorData, e.parameter.callback);
-        }
-
-        // 通常のエラーレスポンス
         const output = ContentService
             .createTextOutput(JSON.stringify(errorData))
             .setMimeType(ContentService.MimeType.JSON);
@@ -1048,29 +986,13 @@ function doPost(e) {
         console.log('POST レート制限チェック結果:', rateLimitCheck);
 
         if (!rateLimitCheck.valid) {
-            const errorHtml = `
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <script>
-                    if (window.parent && window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'rateLimitError',
-                            message: '${rateLimitCheck.details.replace(/'/g, "\\'")}',
-                            retryAfter: ${rateLimitCheck.retryAfter},
-                            success: false
-                        }, '*');
-                    }
-                    console.error('レート制限エラー: ${rateLimitCheck.details.replace(/'/g, "\\'")}');
-                </script>
-            </head>
-            <body>
-                <p>制限に達しました: ${rateLimitCheck.details}</p>
-                <p>しばらく時間をおいてから再度お試しください。</p>
-            </body>
-            </html>
-            `;
-            return HtmlService.createHtmlOutput(errorHtml);
+            return HtmlService.createHtmlOutput(buildPostMessageResponseHtml({
+                messageType: 'rateLimitError',
+                message: rateLimitCheck.details,
+                retryAfter: rateLimitCheck.retryAfter,
+                success: false,
+                bodyHtml: `<p>制限に達しました: ${escapeHtml(rateLimitCheck.details)}</p><p>しばらく時間をおいてから再度お試しください。</p>`
+            }));
         }
 
         let formData;
@@ -1128,31 +1050,14 @@ function doPost(e) {
 
         if (!inputValidation.valid) {
             console.error('入力検証エラー:', inputValidation.errors);
-            const validationErrorHtml = `
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <script>
-                    if (window.parent && window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'validationError',
-                            message: '入力データに問題があります',
-                            errors: ${JSON.stringify(inputValidation.errors)},
-                            success: false
-                        }, '*');
-                    }
-                    console.error('入力検証エラー:', ${JSON.stringify(inputValidation.errors)});
-                </script>
-            </head>
-            <body>
-                <p>入力データエラー:</p>
-                <ul>
-                ${inputValidation.errors.map(error => `<li>${error}</li>`).join('')}
-                </ul>
-            </body>
-            </html>
-            `;
-            return HtmlService.createHtmlOutput(validationErrorHtml);
+            const errorList = (inputValidation.errors || []).map(err => `<li>${escapeHtml(err)}</li>`).join('');
+            return HtmlService.createHtmlOutput(buildPostMessageResponseHtml({
+                messageType: 'validationError',
+                message: '入力データに問題があります',
+                errors: inputValidation.errors,
+                success: false,
+                bodyHtml: `<p>入力データエラー:</p><ul>${errorList}</ul>`
+            }));
         }
 
         // サニタイゼーション済みデータを使用
@@ -1164,54 +1069,23 @@ function doPost(e) {
         console.log('予約レート制限チェック結果:', reservationRateLimitCheck);
 
         if (!reservationRateLimitCheck.valid) {
-            const rateLimitErrorHtml = `
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <script>
-                    if (window.parent && window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'reservationRateLimitError',
-                            message: '${reservationRateLimitCheck.details.replace(/'/g, "\\'")}',
-                            retryAfter: ${reservationRateLimitCheck.retryAfter},
-                            success: false
-                        }, '*');
-                    }
-                    console.error('予約制限エラー: ${reservationRateLimitCheck.details.replace(/'/g, "\\'")}');
-                </script>
-            </head>
-            <body>
-                <p>予約制限: ${reservationRateLimitCheck.details}</p>
-                <p>明日以降に再度お試しください。</p>
-            </body>
-            </html>
-            `;
-            return HtmlService.createHtmlOutput(rateLimitErrorHtml);
+            return HtmlService.createHtmlOutput(buildPostMessageResponseHtml({
+                messageType: 'reservationRateLimitError',
+                message: reservationRateLimitCheck.details,
+                retryAfter: reservationRateLimitCheck.retryAfter,
+                success: false,
+                bodyHtml: `<p>予約制限: ${escapeHtml(reservationRateLimitCheck.details)}</p><p>明日以降に再度お試しください。</p>`
+            }));
         }
 
         // ここまでのバリデーション成功したら、すぐに成功レスポンスを返す
         // 高速応答のため、データ保存とメール送信の完了を待たずにレスポンスを返す
-        const quickResponse = `
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <script>
-                // 親ウィンドウにメッセージを送信（可能な場合）
-                if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({
-                        type: 'reservationSuccess',
-                        message: '予約を受け付けました。確認メールを送信しています。',
-                        success: true
-                    }, '*');
-                }
-                console.log('予約受付: データ検証OK、処理中');
-            </script>
-        </head>
-        <body>
-            <p>予約が受け付けられました。メールを送信しています。</p>
-        </body>
-        </html>
-        `;
+        const quickResponse = buildPostMessageResponseHtml({
+            messageType: 'reservationSuccess',
+            message: '予約を受け付けました。確認メールを送信しています。',
+            success: true,
+            bodyHtml: '<p>予約が受け付けられました。メールを送信しています。</p>'
+        });
 
         // バックグラウンドで処理を続行
         try {
@@ -1233,53 +1107,76 @@ function doPost(e) {
     } catch (error) {
         console.error('POST API処理エラー:', error);
 
-        // エラー用HTMLレスポンス
-        const errorHtml = `
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <script>
-                // 親ウィンドウにエラーメッセージを送信（可能な場合）
-                if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({
-                        type: 'reservationError',
-                        message: '${error.message.replace(/'/g, "\\'")}',
-                        success: false
-                    }, '*');
-                }
-                console.error('予約エラー: ${error.message.replace(/'/g, "\\'")}');
-            </script>
-        </head>
-        <body>
-            <p>エラーが発生しました: ${error.message}</p>
-        </body>
-        </html>
-        `;
-
-        return HtmlService.createHtmlOutput(errorHtml);
+        // 内部メッセージはユーザに見せず一般化した文言で返す（記事「エラーメッセージで内部情報を漏らすな」）
+        const userMessage = '予約処理中にエラーが発生しました。時間をおいて再度お試しください。';
+        return HtmlService.createHtmlOutput(buildPostMessageResponseHtml({
+            messageType: 'reservationError',
+            message: userMessage,
+            success: false,
+            bodyHtml: `<p>${escapeHtml(userMessage)}</p>`
+        }));
     }
 }
 
 /**
- * CORS対応のヘッダーを設定
+ * 親ウィンドウへ postMessage を送るための HTML レスポンスを安全に生成する
+ * - payload は JSON.stringify を使い、その結果を `</script>` ブレイクアウトから守るため `<\/` 化
+ * - 表示テキストは HTML エスケープを通す
+ * 旧実装のテンプレートリテラル直挿（`${error.message}`）に起因する XSS を排除する目的
  */
-function setCorsHeaders(output) {
-    // GAS特有のCORS対応
-    // Access-Control-Allow-Originは直接設定できないため、
-    // クライアント側でJSONPまたは適切な設定で対応
-    return output;
+function buildPostMessageResponseHtml(options) {
+    const {
+        messageType,
+        message,
+        success = false,
+        retryAfter = null,
+        errors = null,
+        bodyHtml = null
+    } = options || {};
+
+    const payload = { type: messageType, message: message, success: success };
+    if (retryAfter !== null && retryAfter !== undefined) payload.retryAfter = retryAfter;
+    if (errors) payload.errors = errors;
+
+    // JSON 文字列内の `</script>` 系統を無害化
+    const payloadJson = JSON.stringify(payload).replace(/<\/(script|style)/gi, '<\\/$1');
+
+    const safeBody = bodyHtml || `<p>${escapeHtml(message)}</p>`;
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    ${safeBody}
+    <script>
+    (function () {
+        var payload = ${payloadJson};
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payload, '*');
+        }
+        if (payload.success === false) {
+            console.error('GAS応答エラー:', payload.message);
+        } else {
+            console.log('GAS応答:', payload.message);
+        }
+    })();
+    </script>
+</body>
+</html>`;
 }
 
 /**
- * JSONP対応のレスポンス生成
+ * CORS対応のヘッダーを設定
+ *
+ * GAS の ContentService では Access-Control-Allow-Origin を明示的に設定できないが、
+ * 「全員アクセス可」でデプロイされた Web アプリは GET 応答に CORS ヘッダが自動付与される。
+ * この関数はその将来的な拡張点（ヘッダ追加 / レスポンス変換）として残してある。
+ * 旧実装にあった JSONP 経由のレスポンスは攻撃面が広いため Phase B で撤去。
  */
-function createJsonpResponse(data, callback) {
-    const jsonString = JSON.stringify(data);
-    const content = callback ? `${callback}(${jsonString});` : jsonString;
-
-    return ContentService
-        .createTextOutput(content)
-        .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+function setCorsHeaders(output) {
+    return output;
 }
 
 /**
