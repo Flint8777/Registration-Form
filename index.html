@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base target="_top">
 
+    <!-- Content Security Policy: GAS送信先・iframe表示元を限定し、外部スクリプトはGoogle系のみ許可 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://script.google.com https://script.googleusercontent.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data: https://drive.google.com https://qiita-image-store.s3.ap-northeast-1.amazonaws.com https://*.googleusercontent.com;
+        connect-src 'self' https://script.google.com https://script.googleusercontent.com;
+        form-action https://script.google.com;
+        frame-src https://script.google.com https://script.googleusercontent.com;
+        frame-ancestors 'self';
+        base-uri 'self';
+        object-src 'none';
+    ">
+
     <!-- SEO Meta Tags -->
     <title>気仙沼星空観望会 - イベント参加予約</title>
     <meta name="description"
@@ -313,6 +328,7 @@
     <!-- Hidden elements for screen readers -->
     <div class="sr-only" aria-live="polite" id="page-announcer"></div>
 
+    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 

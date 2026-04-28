@@ -41,8 +41,12 @@ class AccessibilityManager {
 }
 
 // 定数定義（DRY原則適用）
+// API_URL は config.js で定義された SITE_CONFIG から読み込む（コミット禁止）
+if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.API_URL) {
+    throw new Error('SITE_CONFIG.API_URL が未定義です。config.example.js を config.js にコピーして API_URL を設定してください。');
+}
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/***REMOVED***/exec',
+    API_URL: SITE_CONFIG.API_URL,
     STEPS: {
         BASIC_INFO: 1,
         WORKSHOP_DETAILS: 2,
@@ -904,48 +908,67 @@ function updatePlanetariumPartOptions() {
     }
 }
 
-// 確認画面のコンテンツ生成
+// 登録内容の1行（ラベル+ユーザ入力値）をDOMノードとして組み立てる
+// textContent経由で値を入れることでXSSを防ぐ
+function buildConfirmationRow(label, value, suffix = '') {
+    const row = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = `${label}:`;
+    row.appendChild(strong);
+    row.append(` ${value || ''}${suffix}`);
+    return row;
+}
+
+// 確認画面のコンテンツ生成（DOM API + textContentでXSSを排除）
 function generateConfirmationContent() {
     if (!elements.confirmationContent) return;
 
-    let content = `
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-            <h4 style="margin-bottom: 1rem; color: #333;">📋 登録内容</h4>
-            <div style="display: grid; gap: 0.5rem;">
-                <div><strong>来場人数:</strong> ${formData['来場人数'] || ''}人</div>
-                <div><strong>代表者氏名:</strong> ${formData['代表者氏名'] || ''}</div>
-                <div><strong>来場地域:</strong> ${formData['来場地域'] || ''}</div>
-                <div><strong>メールアドレス:</strong> ${formData['メールアドレス'] || ''}</div>
-                <div><strong>当日の交通手段:</strong> ${formData['当日の交通手段'] || ''}</div>
-                ${formData['当日の交通手段'] === '車' ? `<div><strong>お車台数:</strong> ${formData['お車台数'] || ''}台</div>` : ''}
-                <div><strong>プラネタリウム鑑賞:</strong> ${formData['プラネタリウム鑑賞'] || ''}</div>
-                <div><strong>ワークショップ参加:</strong> ${formData['ワークショップ参加'] || ''}</div>
-    `;
+    elements.confirmationContent.replaceChildren();
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;';
+
+    const heading = document.createElement('h4');
+    heading.style.cssText = 'margin-bottom: 1rem; color: #333;';
+    heading.textContent = '📋 登録内容';
+    card.appendChild(heading);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display: grid; gap: 0.5rem;';
+
+    grid.appendChild(buildConfirmationRow('来場人数', formData['来場人数'], '人'));
+    grid.appendChild(buildConfirmationRow('代表者氏名', formData['代表者氏名']));
+    grid.appendChild(buildConfirmationRow('来場地域', formData['来場地域']));
+    grid.appendChild(buildConfirmationRow('メールアドレス', formData['メールアドレス']));
+    grid.appendChild(buildConfirmationRow('当日の交通手段', formData['当日の交通手段']));
+    if (formData['当日の交通手段'] === '車') {
+        grid.appendChild(buildConfirmationRow('お車台数', formData['お車台数'], '台'));
+    }
+    grid.appendChild(buildConfirmationRow('プラネタリウム鑑賞', formData['プラネタリウム鑑賞']));
+    grid.appendChild(buildConfirmationRow('ワークショップ参加', formData['ワークショップ参加']));
 
     if (formData['ワークショップ参加'] === 'はい') {
-        content += `
-                <div><strong>ワークショップ参加人数:</strong> ${formData['ワークショップ参加人数'] || ''}人</div>
-                <div><strong>予約する部:</strong> ${formData['予約する部'] || ''}</div>
-        `;
+        grid.appendChild(buildConfirmationRow('ワークショップ参加人数', formData['ワークショップ参加人数'], '人'));
+        grid.appendChild(buildConfirmationRow('予約する部', formData['予約する部']));
     }
 
     if (formData['プラネタリウム鑑賞'] === 'はい') {
-        content += `
-                <div><strong>プラネタリウム参加人数:</strong> ${formData['プラネタリウム参加人数'] || ''}人</div>
-                <div><strong>プラネタリウム予約部:</strong> ${formData['プラネタリウム予約部'] || ''}</div>
-        `;
+        grid.appendChild(buildConfirmationRow('プラネタリウム参加人数', formData['プラネタリウム参加人数'], '人'));
+        grid.appendChild(buildConfirmationRow('プラネタリウム予約部', formData['プラネタリウム予約部']));
     }
 
-    content += `
-            </div>
-        </div>
-        <div style="background: linear-gradient(135deg, #ffecd2, #fcb69f); border-radius: 12px; padding: 1rem; text-align: center; color: #8b4513; font-size: 0.9rem;">
-            <strong>⚠️ 注意事項</strong><br>
-            内容に間違いがないかご確認ください。登録後の変更は観望会メールアドレス（kanbokaidaisakusen@gmail.com）までお問い合わせください。
-        </div>
-    `;
+    card.appendChild(grid);
 
-    elements.confirmationContent.innerHTML = content;
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background: linear-gradient(135deg, #ffecd2, #fcb69f); border-radius: 12px; padding: 1rem; text-align: center; color: #8b4513; font-size: 0.9rem;';
+    const noticeStrong = document.createElement('strong');
+    noticeStrong.textContent = '⚠️ 注意事項';
+    notice.appendChild(noticeStrong);
+    notice.appendChild(document.createElement('br'));
+    notice.append('内容に間違いがないかご確認ください。登録後の変更は観望会メールアドレス（kanbokaidaisakusen@gmail.com）までお問い合わせください。');
+
+    elements.confirmationContent.appendChild(card);
+    elements.confirmationContent.appendChild(notice);
 }
 
 // フォーム送信（高速応答版 - 先に完了画面表示）
