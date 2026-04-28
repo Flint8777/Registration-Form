@@ -27,22 +27,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `AccessibilityManager` クラス: スクリーンリーダー対応、フォーカス管理
   - `CONFIG` オブジェクト: ステップ定数、セレクタ、CSSクラス名を一元管理。API URL は `SITE_CONFIG` から取得
   - ステップナビゲーション: `updateStep()`, `nextStep()`, `previousStep()` でフォーム遷移を制御
-  - 残席データ取得: `loadWorkshopParts()`, `loadPlanetariumParts()` で GAS API から JSONP で取得
+  - 残席データ取得: `loadWorkshopParts()`, `loadPlanetariumParts()` で GAS API から `fetchJson()`（fetch + JSON）で取得
   - 残席表示: `updatePartOptions()`, `updatePlanetariumPartOptions()` で残席に応じた選択肢の有効/無効/グレーアウトを制御
   - フォーム送信: `submitForm()` で隠し iframe 経由で GAS API へ POST。送信エラー・タイムアウト時にユーザーへ通知
 - **styles.css**: レスポンシブデザイン、グレーアウト表示、アクセシビリティ対応スタイル
   - `[aria-hidden="true"]:not(.conditional-field)` で非表示制御。`.conditional-field` は独自の表示切替を使用
 
-### バックエンド（Google Apps Script、別途配置）
+### バックエンド（`apps-script/KB/`）
 
-- `Code.gs`: メイン API（予約受付、残席照会、確認メール送信）
-- `setup-environment.gs`: 環境変数設定スクリプト
-- GAS のウェブアプリとしてデプロイし、`config.js` の `API_URL` に設定
+- `Code.gs`: メイン API（doGet/doPost、入力検証、メール送信、レート制限）
+- `setup-environment.example.gs`: Script Properties セットアップのテンプレート
+- 実値版 `setup-environment.gs` および `Temp.gs` は `.gitignore` で除外。Apps Script エディタ側のみで管理
+- `kanbokaidaisakusen@gmail.com` はプロジェクトの公開連絡先（秘密情報ではない）
 
 ### 通信方式
 
-- 残席データ取得: JSONP（`fetchWithJsonp()`）
-- フォーム送信: 隠し iframe + 動的 form で POST
+- 残席データ取得: `fetchJson()`（fetch + JSON、CSP の `connect-src` で GAS を許可済み）
+- フォーム送信: 隠し iframe + 動的 form で POST（CORS 回避のため）
 
 ## 注意事項
 
@@ -51,3 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - iframe 埋め込みでの利用を想定（`closeIframe()` や `postMessage` による親ウィンドウ通信あり）
 - `config.js` は `.gitignore` に含まれておりコミット禁止
 - `innerHTML` にユーザー入力を埋め込む場合は必ず `escapeHtml()` を使用すること
+- GAS 側でユーザー入力をログに出すときは `summarizeFormData()` または `maskEmail()` を通すこと（Cloud Logging に PII を残さない）
+- GAS 側の検証ロジック（`validateInput`/`validateFormData`）の catch 節は **fail-closed**（`valid: false` を返す）
+- 外部リソースを追加する場合は `index.html` の CSP メタタグ（`script-src` / `connect-src` / `img-src` 等）を必ず更新する
+- `apps-script/KB/Code.gs` は CRLF。Edit/Write 後 `git ls-files --eol` で確認し、LF 化していたら Python で `b'\r\n'` 化して復元する
