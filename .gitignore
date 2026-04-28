@@ -1,1 +1,15 @@
+# 機密設定（GASデプロイURL・SPREADSHEET_IDなどを含むため絶対にコミットしない）
 config.js
+apps-script/**/setup-environment.gs
+apps-script/**/Temp.gs
+apps-script/**/*.local.gs
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ローカルの作業用
+.claude/local/

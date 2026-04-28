@@ -91,11 +91,15 @@ cp config.example.js config.js
 
 #### 3. Google Apps Scriptの設定
 1. Google Apps Scriptでプロジェクトを作成
-2. `Code.gs`の内容をコピー&ペースト
-3. ウェブアプリとしてデプロイ
+2. `apps-script/KB/Code.gs` の内容をコピー&ペースト
+3. `apps-script/KB/setup-environment.example.gs` をコピーして、Apps Script エディタ上で `setup-environment.gs` として作成し、実値（SPREADSHEET_ID、ADMIN_EMAIL など）を入れて `setupEnvironmentVariables()` を一度だけ実行
+4. ウェブアプリとしてデプロイ
    - 実行ユーザー: 自分
    - アクセス権: 全員
-4. デプロイURLを`config.js`の`API_URL`に設定
+5. デプロイURLを`config.js`の`API_URL`に設定
+
+> ⚠️ `setup-environment.gs` は SPREADSHEET_ID 等を含むためリポジトリには戻さないこと。
+> `.gitignore` で除外済みだが、Apps Script 側でのみ管理する。
 
 #### 4. スプレッドシートの準備
 1. Googleスプレッドシートを作成
@@ -140,9 +144,13 @@ const SITE_CONFIG = {
 │   ├── 観望会ロゴタイプ_黒.png  # メインロゴ
 │   ├── シンボルマーク.png      # ファビコン・アプリアイコン
 │   └── OGP-image.png          # SNSシェア用画像
-├── Google Apps Script/     # バックエンド（別途配置）
-│   ├── Code.gs               # メインAPI
-│   └── setup-environment.gs  # 環境変数設定
+├── apps-script/             # GAS バックエンド（リポジトリ管理対象）
+│   └── KB/
+│       ├── Code.gs                          # メインAPI（doGet/doPost、検証、メール送信）
+│       ├── setup-environment.example.gs     # 環境変数セットアップのテンプレート
+│       └── appsscript.json                  # Apps Script マニフェスト
+│
+│   ※ 実値を含む setup-environment.gs は .gitignore で除外
 └── .github/                 # GitHub設定
     └── ISSUE_TEMPLATE/      # Issue テンプレート
 ```
@@ -211,7 +219,8 @@ const SITE_CONFIG = {
 
 3. Google Apps Script のデプロイ
 
-    - Google Apps Script に `Code.gs` と `setup-environment.gs` をアップロードし、ウェブアプリとしてデプロイします。実行ユーザーは適宜設定してください。
+    - `apps-script/KB/Code.gs` を Apps Script プロジェクトにコピーし、ウェブアプリとしてデプロイします。
+    - `apps-script/KB/setup-environment.example.gs` を参考に Script Properties を設定してください（SPREADSHEET_ID / ADMIN_EMAIL は必須）。実値版の `setup-environment.gs` はコミットせず、Apps Script 側のみで管理してください（.gitignore 済み）。
 
 4. スプレッドシートの準備
 
@@ -240,7 +249,9 @@ const SITE_CONFIG = {
 - manifest.json
 - SECURITY.md
 - Images/
-- Google Apps Script ファイル (Code.gs, setup-environment.gs)
+- apps-script/KB/Code.gs（GAS バックエンド本体）
+- apps-script/KB/setup-environment.example.gs（環境変数セットアップのテンプレート）
+- apps-script/KB/setup-environment.gs（実値版・Git 管理外）
 
 注意事項
 ----
