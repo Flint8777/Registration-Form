@@ -1,5 +1,16 @@
 // 気仙沼星空観望会 予約システム - メインスクリプト
 
+// HTMLエスケープ（XSS対策）
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // アクセシビリティ管理クラス
 class AccessibilityManager {
     static announcePageChange(stepNumber) {
@@ -42,6 +53,7 @@ class AccessibilityManager {
 
 // 定数定義（DRY原則適用）
 // API_URL は config.js で定義された SITE_CONFIG から読み込む（コミット禁止）
+// 未設定のまま起動すると API 呼び出しが空 URL になるため、起動時に明示的に止める
 if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.API_URL) {
     throw new Error('SITE_CONFIG.API_URL が未定義です。config.example.js を config.js にコピーして API_URL を設定してください。');
 }
@@ -55,8 +67,7 @@ const CONFIG = {
     },
     TIMEOUTS: {
         EMAIL_VALIDATION: 500,
-        RESULT_DISPLAY: 5000,
-        BACKGROUND_UPDATE: [50, 100, 200, 500, 1000]
+        RESULT_DISPLAY: 5000
     },
     SELECTORS: {
         FORM: '#reservation-form',
@@ -79,7 +90,12 @@ const CONFIG = {
         TRANSPORT_MODE: '#当日の交通手段',
         CAR_COUNT_GROUP: '#car-count-group',
         CAR_COUNT: '#お車台数',
-        EVENT_SOURCE: '#イベント認知経路'
+        EVENT_SOURCE: '#イベント認知経路',
+        EMAIL_CONFIRM_INPUT: '#メールアドレス確認',
+        EMAIL_CONFIRM_VALIDATION: '#email-confirm-validation-message',
+        CONSENT_GROUP: '#consent-group',
+        PRIVACY_CONSENT: '#privacy-consent',
+        PRIVACY_POLICY_LINK: '#privacy-policy-link'
     },
     CLASSES: {
         ACTIVE: 'active',
@@ -160,7 +176,12 @@ function initializeElements() {
         transportMode: getElement(CONFIG.SELECTORS.TRANSPORT_MODE),
         carCountGroup: getElement(CONFIG.SELECTORS.CAR_COUNT_GROUP),
         carCount: getElement(CONFIG.SELECTORS.CAR_COUNT),
-        eventSource: getElement(CONFIG.SELECTORS.EVENT_SOURCE)
+        eventSource: getElement(CONFIG.SELECTORS.EVENT_SOURCE),
+        emailConfirmInput: getElement(CONFIG.SELECTORS.EMAIL_CONFIRM_INPUT),
+        emailConfirmValidation: getElement(CONFIG.SELECTORS.EMAIL_CONFIRM_VALIDATION),
+        consentGroup: getElement(CONFIG.SELECTORS.CONSENT_GROUP),
+        privacyConsent: getElement(CONFIG.SELECTORS.PRIVACY_CONSENT),
+        privacyPolicyLink: getElement(CONFIG.SELECTORS.PRIVACY_POLICY_LINK)
     };
 }
 
@@ -224,6 +245,25 @@ function showEmailValidation(input, isValid, message) {
 function validateEmail(email) {
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     return emailRegex.test(email);
+}
+
+// メールアドレス確認のバリデーション表示
+function showEmailConfirmValidation(isValid, message) {
+    if (!elements.emailConfirmValidation || !elements.emailConfirmInput) return;
+
+    toggleClasses(elements.emailConfirmInput, [CONFIG.CLASSES.EMAIL_VALID, CONFIG.CLASSES.EMAIL_INVALID]);
+    toggleClasses(elements.emailConfirmValidation, [CONFIG.CLASSES.SHOW, 'valid', 'invalid']);
+
+    if (message) {
+        elements.emailConfirmValidation.textContent = message;
+        const validationClass = isValid ? 'valid' : 'invalid';
+        const inputClass = isValid ? CONFIG.CLASSES.EMAIL_VALID : CONFIG.CLASSES.EMAIL_INVALID;
+        toggleClasses(elements.emailConfirmInput, [], [inputClass]);
+        toggleClasses(elements.emailConfirmValidation, [], [validationClass]);
+        setTimeout(() => {
+            elements.emailConfirmValidation.classList.add(CONFIG.CLASSES.SHOW);
+        }, 50);
+    }
 }
 
 // ステップ更新
@@ -292,6 +332,8 @@ function updateNavigationButtons(step) {
     [elements.backBtn, elements.nextBtn, elements.submitBtn].forEach(btn => {
         if (btn) btn.classList.remove(CONFIG.CLASSES.VISIBLE);
     });
+    // 同意チェックボックスを初期状態で非表示
+    if (elements.consentGroup) elements.consentGroup.style.display = 'none';
 
     // 完了画面：ナビゲーションを非表示
     if (step === CONFIG.STEPS.COMPLETION) {
@@ -317,9 +359,10 @@ function updateNavigationButtons(step) {
         ? ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.WORKSHOP_DETAILS)
         : ((planetariumIntent === 'はい') ? CONFIG.STEPS.PLANETARIUM_DETAILS : CONFIG.STEPS.BASIC_INFO);
 
-    // 最終入力ステップでは送信ボタン、それ以外は次へ
+    // 最終入力ステップでは送信ボタンと同意チェックボックスを表示、それ以外は次へ
     if (step === lastDataStep) {
         if (elements.submitBtn) elements.submitBtn.classList.add(CONFIG.CLASSES.VISIBLE);
+        if (elements.consentGroup) elements.consentGroup.style.display = 'block';
     } else {
         if (elements.nextBtn) elements.nextBtn.classList.add(CONFIG.CLASSES.VISIBLE);
     }
@@ -413,9 +456,17 @@ async function nextStep() {
                 setButtonLoading(elements.nextBtn, false);
                 return;
             }
-            // どちらも不要なら送信
+            // どちらも不要なら送信（同意チェックを表示して確認）
             console.log('両方不要のため直接送信');
             setButtonLoading(elements.nextBtn, false);
+            if (elements.consentGroup) elements.consentGroup.style.display = 'block';
+            if (elements.privacyConsent && !elements.privacyConsent.checked) {
+                // 次へボタンを隠し、送信ボタンを表示
+                if (elements.nextBtn) elements.nextBtn.classList.remove(CONFIG.CLASSES.VISIBLE);
+                if (elements.submitBtn) elements.submitBtn.classList.add(CONFIG.CLASSES.VISIBLE);
+                showResult('個人情報の取り扱いへの同意が必要です。', false);
+                return;
+            }
             await submitForm();
             return;
         }
@@ -499,7 +550,7 @@ function validateCurrentStep() {
     for (let field of requiredFields) {
         if (!field.value.trim()) {
             field.focus();
-            showResult(`${field.previousElementSibling.textContent.replace(/[👤📍📧🔬👥⏰]/g, '').trim()}を入力してください。`, false);
+            showResult(`${field.previousElementSibling.textContent.replace(/[👤👥📍📧📱🛣🚗✂🪐⏰]/g, '').trim()}を入力してください。`, false);
             return false;
         }
 
@@ -511,6 +562,18 @@ function validateCurrentStep() {
                 showEmailValidation(field, false, '❌ 無効なメールアドレス形式です');
                 return false;
             }
+        }
+    }
+
+    // ステップ1の追加バリデーション（メールアドレス一致確認）
+    if (currentStep === CONFIG.STEPS.BASIC_INFO) {
+        const email = elements.emailInput?.value?.trim() || '';
+        const emailConfirm = elements.emailConfirmInput?.value?.trim() || '';
+        if (email && emailConfirm && email !== emailConfirm) {
+            elements.emailConfirmInput?.focus();
+            showResult('メールアドレスが一致しません。', false);
+            showEmailConfirmValidation(false, '❌ メールアドレスが一致しません');
+            return false;
         }
     }
 
@@ -614,9 +677,8 @@ function saveCurrentStepData() {
 }
 
 // GAS の GET エンドポイントから JSON を取得する
-// 旧実装は <script> タグ経由の JSONP を採用しており、レスポンスを任意 JS として実行していた。
+// 旧実装は <script> タグ経由の JSONP でレスポンスを任意 JS として実行していた。
 // GAS 側は応答時に Access-Control-Allow-Origin を付与しているため、通常の fetch で十分。
-// 失敗時は何も実行しないことが保証され、JSONP のような任意コード実行リスクが消える。
 async function fetchJson(url, { timeoutMs = 15000 } = {}) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -678,9 +740,13 @@ async function loadPlanetariumParts() {
         }
 
         planetariumParts = data.data || [];
-        console.log('プラネタリウム部の数:', planetariumParts.length);
 
+        console.log('取得したプラネタリウム部の情報:', planetariumParts); // デバッグ用
+        console.log('プラネタリウム部の数:', planetariumParts.length); // デバッグ用
+
+        // 初期状態で一度更新（参加人数0でも全部表示される）
         updatePlanetariumPartOptions();
+        // プラネタリウム参加人数を来場人数に基づいて再生成
         initializePlanetariumCount();
         setLoading(false);
 
@@ -850,67 +916,48 @@ function updatePlanetariumPartOptions() {
     }
 }
 
-// 登録内容の1行（ラベル+ユーザ入力値）をDOMノードとして組み立てる
-// textContent経由で値を入れることでXSSを防ぐ
-function buildConfirmationRow(label, value, suffix = '') {
-    const row = document.createElement('div');
-    const strong = document.createElement('strong');
-    strong.textContent = `${label}:`;
-    row.appendChild(strong);
-    row.append(` ${value || ''}${suffix}`);
-    return row;
-}
-
-// 確認画面のコンテンツ生成（DOM API + textContentでXSSを排除）
+// 確認画面のコンテンツ生成
 function generateConfirmationContent() {
     if (!elements.confirmationContent) return;
 
-    elements.confirmationContent.replaceChildren();
-
-    const card = document.createElement('div');
-    card.style.cssText = 'background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;';
-
-    const heading = document.createElement('h4');
-    heading.style.cssText = 'margin-bottom: 1rem; color: #333;';
-    heading.textContent = '📋 登録内容';
-    card.appendChild(heading);
-
-    const grid = document.createElement('div');
-    grid.style.cssText = 'display: grid; gap: 0.5rem;';
-
-    grid.appendChild(buildConfirmationRow('来場人数', formData['来場人数'], '人'));
-    grid.appendChild(buildConfirmationRow('代表者氏名', formData['代表者氏名']));
-    grid.appendChild(buildConfirmationRow('来場地域', formData['来場地域']));
-    grid.appendChild(buildConfirmationRow('メールアドレス', formData['メールアドレス']));
-    grid.appendChild(buildConfirmationRow('当日の交通手段', formData['当日の交通手段']));
-    if (formData['当日の交通手段'] === '車') {
-        grid.appendChild(buildConfirmationRow('お車台数', formData['お車台数'], '台'));
-    }
-    grid.appendChild(buildConfirmationRow('プラネタリウム鑑賞', formData['プラネタリウム鑑賞']));
-    grid.appendChild(buildConfirmationRow('ワークショップ参加', formData['ワークショップ参加']));
+    let content = `
+        <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+            <h4 style="margin-bottom: 1rem; color: #333;">📋 登録内容</h4>
+            <div style="display: grid; gap: 0.5rem;">
+                <div><strong>来場人数:</strong> ${escapeHtml(formData['来場人数'])}人</div>
+                <div><strong>代表者氏名:</strong> ${escapeHtml(formData['代表者氏名'])}</div>
+                <div><strong>来場地域:</strong> ${escapeHtml(formData['来場地域'])}</div>
+                <div><strong>メールアドレス:</strong> ${escapeHtml(formData['メールアドレス'])}</div>
+                <div><strong>当日の交通手段:</strong> ${escapeHtml(formData['当日の交通手段'])}</div>
+                ${formData['当日の交通手段'] === '車' ? `<div><strong>お車台数:</strong> ${escapeHtml(formData['お車台数'])}台</div>` : ''}
+                <div><strong>プラネタリウム鑑賞:</strong> ${escapeHtml(formData['プラネタリウム鑑賞'])}</div>
+                <div><strong>ワークショップ参加:</strong> ${escapeHtml(formData['ワークショップ参加'])}</div>
+    `;
 
     if (formData['ワークショップ参加'] === 'はい') {
-        grid.appendChild(buildConfirmationRow('ワークショップ参加人数', formData['ワークショップ参加人数'], '人'));
-        grid.appendChild(buildConfirmationRow('予約する部', formData['予約する部']));
+        content += `
+                <div><strong>ワークショップ参加人数:</strong> ${escapeHtml(formData['ワークショップ参加人数'])}人</div>
+                <div><strong>予約する部:</strong> ${escapeHtml(formData['予約する部'])}</div>
+        `;
     }
 
     if (formData['プラネタリウム鑑賞'] === 'はい') {
-        grid.appendChild(buildConfirmationRow('プラネタリウム参加人数', formData['プラネタリウム参加人数'], '人'));
-        grid.appendChild(buildConfirmationRow('プラネタリウム予約部', formData['プラネタリウム予約部']));
+        content += `
+                <div><strong>プラネタリウム参加人数:</strong> ${escapeHtml(formData['プラネタリウム参加人数'])}人</div>
+                <div><strong>プラネタリウム予約部:</strong> ${escapeHtml(formData['プラネタリウム予約部'])}</div>
+        `;
     }
 
-    card.appendChild(grid);
+    content += `
+            </div>
+        </div>
+        <div style="background: linear-gradient(135deg, #ffecd2, #fcb69f); border-radius: 12px; padding: 1rem; text-align: center; color: #8b4513; font-size: 0.9rem;">
+            <strong>⚠️ 注意事項</strong><br>
+            内容に間違いがないかご確認ください。登録後の変更は観望会メールアドレス（kanbokaidaisakusen@gmail.com）までお問い合わせください。
+        </div>
+    `;
 
-    const notice = document.createElement('div');
-    notice.style.cssText = 'background: linear-gradient(135deg, #ffecd2, #fcb69f); border-radius: 12px; padding: 1rem; text-align: center; color: #8b4513; font-size: 0.9rem;';
-    const noticeStrong = document.createElement('strong');
-    noticeStrong.textContent = '⚠️ 注意事項';
-    notice.appendChild(noticeStrong);
-    notice.appendChild(document.createElement('br'));
-    notice.append('内容に間違いがないかご確認ください。登録後の変更は観望会メールアドレス（kanbokaidaisakusen@gmail.com）までお問い合わせください。');
-
-    elements.confirmationContent.appendChild(card);
-    elements.confirmationContent.appendChild(notice);
+    elements.confirmationContent.innerHTML = content;
 }
 
 // フォーム送信（高速応答版 - 先に完了画面表示）
@@ -946,7 +993,8 @@ async function submitForm() {
                     確認メールを送信中です。しばらくお待ちください。<br>
                     当日は気をつけてお越しください。<br>
                     <small style="color: #ffffff; margin-top: 10px; display: block;">
-                        この画面を閉じても大丈夫です。メールは数分以内に届きます。
+                        予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
+                        kanbokaidaisakusen@gmail.com までご連絡ください。
                     </small>
                 `;
             }
@@ -993,7 +1041,8 @@ async function submitForm() {
                         確認メールをお送りいたしました。<br>
                         当日は気をつけてお越しください。<br>
                         <small style="color: #ffffff; margin-top: 10px; display: block;">
-                            この画面を閉じて、元のページに戻ることができます。
+                            予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
+                            kanbokaidaisakusen@gmail.com までご連絡ください。
                         </small>
                     `;
                 }
@@ -1005,8 +1054,42 @@ async function submitForm() {
         // iframe エラー処理
         iframe.onerror = function () {
             console.error('iframe読み込みエラー');
-            // エラー時もユーザー体験を損なわないよう、静かに処理
+            const completionMessage = document.querySelector('.completion-message');
+            if (completionMessage) {
+                completionMessage.innerHTML = `
+                    ⚠️ 送信中にエラーが発生した可能性があります。<br>
+                    しばらく経っても確認メールが届かない場合は、<br>
+                    お手数ですが再度お申し込みください。<br>
+                    <small style="color: #ffffff; margin-top: 10px; display: block;">
+                        問題が解決しない場合は kanbokaidaisakusen@gmail.com までご連絡ください。
+                    </small>
+                `;
+            }
         };
+
+        // 送信タイムアウト検知（30秒）
+        let submitCompleted = false;
+        const originalOnload = iframe.onload;
+        iframe.onload = function () {
+            submitCompleted = true;
+            originalOnload.call(this);
+        };
+        setTimeout(() => {
+            if (!submitCompleted) {
+                console.warn('送信タイムアウト: 30秒以内に応答がありませんでした');
+                const completionMessage = document.querySelector('.completion-message');
+                if (completionMessage) {
+                    completionMessage.innerHTML = `
+                        ⚠️ サーバーからの応答に時間がかかっています。<br>
+                        予約は送信済みですが、確認メールが届かない場合は<br>
+                        再度お申し込みいただくか、下記までご連絡ください。<br>
+                        <small style="color: #ffffff; margin-top: 10px; display: block;">
+                            kanbokaidaisakusen@gmail.com
+                        </small>
+                    `;
+                }
+            }
+        }, 30000);
 
         // フォーム送信
         submitFormElement.submit();
@@ -1030,8 +1113,7 @@ function resetForm() {
 // ワークショップ参加選択の変更監視
 document.getElementById('ワークショップ参加').addEventListener('change', function () {
     const participationValue = this.value;
-    if (participationValue === '参加しない') {
-        // 観望会のみの場合、ワークショップ関連データをクリア
+    if (participationValue === 'いいえ') {
         delete formData['ワークショップ参加人数'];
         delete formData['予約する部'];
     }
@@ -1048,66 +1130,6 @@ document.querySelectorAll('.form-control').forEach(input => {
     });
 });
 
-// iOS専用の軽量背景表示関数
-function ensureBackgroundDisplay() {
-    const body = document.body;
-    const html = document.documentElement;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isMobile = window.innerWidth <= 768;
-
-    if (isMobile || isIOS) {
-        // iOS/モバイル用の軽量設定
-        const lightBackgroundStyle = {
-            'background-color': '#667eea',
-            'background': '-webkit-gradient(linear, left top, right bottom, color-stop(0%, #667eea), color-stop(100%, #764ba2))',
-            'background-attachment': 'scroll',
-            'background-repeat': 'no-repeat',
-            'background-size': 'cover',
-            'min-height': '100vh',
-            'height': 'auto'
-        };
-
-        // 重要度を最高にして適用
-        Object.keys(lightBackgroundStyle).forEach(property => {
-            body.style.setProperty(property, lightBackgroundStyle[property], 'important');
-            html.style.setProperty(property, lightBackgroundStyle[property], 'important');
-        });
-
-        // iOS専用の追加設定
-        if (isIOS) {
-            body.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-            body.style.setProperty('-webkit-backface-visibility', 'hidden', 'important');
-            body.style.setProperty('transform', 'translateZ(0)', 'important');
-
-            // htmlにも同じ背景を確実に設定
-            html.style.setProperty('background-color', '#667eea', 'important');
-            html.style.setProperty('height', '100%', 'important');
-            html.style.setProperty('min-height', '100vh', 'important');
-
-            // Safari用の特別設定
-            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-                document.documentElement.style.setProperty('background', '-webkit-gradient(linear, left top, right bottom, color-stop(0%, #667eea), color-stop(100%, #764ba2))', 'important');
-            }
-        }
-
-        // パフォーマンス優先のため、モバイルでは星空を非表示
-        const starElement = document.querySelector('body::before');
-        if (starElement) {
-            starElement.style.display = 'none';
-        }
-    }
-}
-
-// より頻繁に背景をチェック
-function forceBackgroundUpdate() {
-    ensureBackgroundDisplay();
-
-    // タイマーでも定期的にチェック（iOS対応）
-    setTimeout(ensureBackgroundDisplay, 100);
-    setTimeout(ensureBackgroundDisplay, 500);
-    setTimeout(ensureBackgroundDisplay, 1000);
-}
-
 // イベントリスナーの設定
 function setupEventListeners() {
     // ナビゲーションボタンのイベント
@@ -1116,25 +1138,37 @@ function setupEventListeners() {
 
     // submitボタンのイベント（ローディング状態管理付き）
     elements.submitBtn?.addEventListener('click', async function (event) {
-        event.preventDefault(); // デフォルトの送信を防止
+        event.preventDefault();
 
-        // バリデーションチェック
         if (!validateCurrentStep()) {
             return;
         }
 
-        // データ保存
+        // 同意チェック
+        if (elements.privacyConsent && !elements.privacyConsent.checked) {
+            showResult('個人情報の取り扱いへの同意が必要です。', false);
+            return;
+        }
+
         saveCurrentStepData();
 
         // submitForm関数を呼び出し（内部でローディング管理される）
         await submitForm();
     });
 
+    // プライバシーポリシーリンクのクリックでdetailsを開いてスクロール
+    elements.privacyPolicyLink?.addEventListener('click', function (event) {
+        event.preventDefault();
+        const details = document.querySelector('.privacy-policy');
+        if (details) {
+            details.open = true;
+            details.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
     // ワークショップ参加選択の変更監視
     elements.workshopParticipation?.addEventListener('change', function () {
-        const participationValue = this.value;
-        if (participationValue === '参加しない') {
-            // 観望会のみの場合、ワークショップ関連データをクリア
+        if (this.value === 'いいえ') {
             delete formData['ワークショップ参加人数'];
             delete formData['予約する部'];
         }
@@ -1232,8 +1266,8 @@ function setupEventListeners() {
 
     // ワークショップ参加の表示制御（ステップ2のセクション）
     elements.workshopParticipation?.addEventListener('change', function (event) {
-        event.stopPropagation(); // イベントの伝播を停止
-        const isJoin = this.value === '参加する';
+        event.stopPropagation();
+        const isJoin = this.value === 'はい';
         const workshopSection = document.getElementById('workshop-section');
         if (workshopSection) {
             workshopSection.classList.toggle('show', isJoin);
@@ -1332,6 +1366,37 @@ function setupEmailValidation() {
             showEmailValidation(this, true, '');
         }
     });
+
+    // メールアドレス確認フィールドのリアルタイム一致チェック
+    if (elements.emailConfirmInput) {
+        let confirmTimeout;
+
+        function checkEmailMatch() {
+            const email = elements.emailInput?.value?.trim() || '';
+            const confirm = elements.emailConfirmInput.value.trim();
+
+            if (confirm === '') {
+                showEmailConfirmValidation(true, '');
+                return;
+            }
+            if (!validateEmail(confirm)) {
+                showEmailConfirmValidation(false, '❌ 無効なメールアドレス形式です');
+                return;
+            }
+            if (email === confirm) {
+                showEmailConfirmValidation(true, '✅ メールアドレスが一致しています');
+            } else {
+                showEmailConfirmValidation(false, '❌ メールアドレスが一致しません');
+            }
+        }
+
+        elements.emailConfirmInput.addEventListener('input', function () {
+            clearTimeout(confirmTimeout);
+            confirmTimeout = setTimeout(checkEmailMatch, CONFIG.TIMEOUTS.EMAIL_VALIDATION);
+        });
+
+        elements.emailConfirmInput.addEventListener('blur', checkEmailMatch);
+    }
 }
 
 // 来場人数のオプションを生成
@@ -1440,33 +1505,4 @@ document.addEventListener('DOMContentLoaded', () => {
     AccessibilityManager.manageAriaHidden();
 
     updateStep(CONFIG.STEPS.BASIC_INFO);
-
-    // 初回背景設定（最優先）
-    forceBackgroundUpdate();
-
-    // 画面回転・リサイズ時の処理
-    window.addEventListener('orientationchange', () => {
-        CONFIG.TIMEOUTS.BACKGROUND_UPDATE.forEach(delay => {
-            setTimeout(forceBackgroundUpdate, delay);
-        });
-    });
-
-    window.addEventListener('resize', () => {
-        setTimeout(forceBackgroundUpdate, CONFIG.TIMEOUTS.BACKGROUND_UPDATE[0]);
-    });
-
-    // iOS用の追加イベント監視
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        const iosEvents = ['visibilitychange', 'focus', 'scroll', 'touchstart'];
-
-        iosEvents.forEach((event, index) => {
-            const options = index >= 2 ? { once: true } : {};
-
-            if (event === 'focus') {
-                window.addEventListener(event, forceBackgroundUpdate, options);
-            } else {
-                document.addEventListener(event, forceBackgroundUpdate, options);
-            }
-        });
-    }
 });

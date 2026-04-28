@@ -86,7 +86,26 @@
         <!-- 参加登録フォームタイトル -->
         <div class="info-card form-title-card">
             <h2>参加登録フォーム</h2>
-            <p>　複数名で参加される方は、代表者のみご回答ください。なお、ご記入いただいた情報は本イベントの活動以外では使用いたしません。</p>
+            <p>　複数名で参加される方は、代表者のみご回答ください。</p>
+            <details class="privacy-policy">
+                <summary>個人情報の取り扱いについて</summary>
+                <div class="privacy-policy-content">
+                    <h3>収集する情報</h3>
+                    <p>代表者氏名、メールアドレス、来場地域、来場人数、交通手段、各プログラムへの参加希望</p>
+                    <h3>利用目的</h3>
+                    <ul>
+                        <li>予約の受付・管理</li>
+                        <li>確認メールの送信</li>
+                        <li>当日の運営準備（席・駐車場の確保等）</li>
+                    </ul>
+                    <p>上記以外の目的では使用いたしません。</p>
+                    <h3>データの送信先</h3>
+                    <p>ご入力いただいた情報は Google Apps Script を通じて Google スプレッドシートに保存されます。データの送信・保管には Google のサーバーが使用されます。</p>
+                    <h3>お問い合わせ</h3>
+                    <p>個人情報の開示・訂正・削除のご依頼は、下記までご連絡ください。<br>
+                    kanbokaidaisakusen@gmail.com</p>
+                </div>
+            </details>
         </div>
 
         <!-- ステップインジケーター -->
@@ -108,7 +127,7 @@
             <p>処理中…</p>
         </div>
 
-        <form id="reservation-form">
+        <form id="reservation-form" novalidate>
             <!-- ステップ1: 基本情報 -->
             <div class="step-content active" id="content-1">
                 <div class="form-group">
@@ -123,7 +142,7 @@
                 <div class="form-group">
                     <label for="代表者氏名">👤 代表者氏名</label>
                     <input type="text" id="代表者氏名" name="代表者氏名" class="form-control" required
-                        placeholder="代表者のお名前を入力してください">
+                        autocomplete="name" placeholder="代表者のお名前を入力してください">
                 </div>
 
                 <div class="form-group">
@@ -143,8 +162,15 @@
                 <div class="form-group">
                     <label for="メールアドレス">📧 メールアドレス</label>
                     <input type="email" id="メールアドレス" name="メールアドレス" class="form-control" required
-                        placeholder="連絡先メールアドレスを入力してください">
+                        autocomplete="email" placeholder="連絡先メールアドレスを入力してください">
                     <div class="email-validation-message" id="email-validation-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="メールアドレス確認">📧 メールアドレス（確認）</label>
+                    <input type="email" id="メールアドレス確認" class="form-control" required
+                        autocomplete="off" placeholder="もう一度メールアドレスを入力してください">
+                    <div class="email-validation-message" id="email-confirm-validation-message"></div>
                 </div>
 
                 <!-- 追加: 当日の交通手段 -->
@@ -230,10 +256,10 @@
                 <!-- ワークショップ詳細 -->
                 <div id="workshop-section">
                     <div class="info-card">
-                        <p>本ワークショップは、当日参加枠とは別に各時間帯に予約枠をご用意しております。</p>
-                        <p>✅ 予約枠（60名様分）: 事前にご予約が必要ですが、希望時間帯に確実にご参加いただけます。</p>
-                        <p>✅ 当日枠（40名様分）: 当日、お席が空いていればすぐにご参加いただけます。</p>
-                        <p>みなさまのご参加を心よりお待ちしております！</p>
+                        <p>本ワークショップは【予約枠】と【当日枠】をご用意しています。</p>
+                        <p>✅ 予約枠（60名様）: 事前にご予約が必要ですが、希望時間帯に確実にご参加いただけます。</p>
+                        <p>✅ 当日枠（40名様）: 当日、お席が空いていればすぐにご参加いただけます。</p>
+                        <p>⚠️ 予約のお時間にお越しにならない場合はキャンセル扱いとなります。ご了承ください。</p>
                     </div>
 
                     <div class="form-group">
@@ -268,7 +294,11 @@
             <div class="step-content" id="content-3">
                 <div id="planetarium-section">
                     <div class="info-card">
-                        <p>プラネタリウムは3部制です。ご希望の時間帯をお選びください。</p>
+                        <p>本プラネタリウムは上映時間30分の3部制であり、【予約枠】と【当日枠】をご用意しています。</p>
+                        <p>✅ 予約枠（60名）：事前にご予約いただくと、ご希望の時間帯に確実にご参加いただけます。</p>
+                        <p>✅ 当日枠（30名）：当日、空席がある場合に先着順でご案内します。満席の場合はご参加いただけません。</p>
+                        <p>⚠️ 途中入退場はできません。上映開始の5分前までにプラネタリウム会場へ必ずお越しください。
+                        </p>
                     </div>
 
                     <div class="form-group">
@@ -302,10 +332,19 @@
                         確認メールをお送りいたしましたので、ご確認ください。<br>
                         当日は気をつけてお越しください。<br>
                         <small style="color: #ffffff; margin-top: 10px; display: block;">
-                            この画面を閉じて、元のページに戻ることができます。
+                            予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
+                            kanbokaidaisakusen@gmail.com までご連絡ください。
                         </small>
                     </div>
                 </div>
+            </div>
+
+            <!-- 個人情報取り扱い同意 -->
+            <div class="consent-group" id="consent-group" style="display: none;">
+                <label class="consent-label">
+                    <input type="checkbox" id="privacy-consent" name="privacy-consent">
+                    <span><a href="#" id="privacy-policy-link">個人情報の取り扱い</a>に同意の上、送信します</span>
+                </label>
             </div>
 
             <!-- ナビゲーションボタン -->
