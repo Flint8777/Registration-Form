@@ -6,6 +6,12 @@
 //   TEST_MODE           'true' の間は試験モード．startTestMode / endTestMode で切り替える
 
 const SHEET_NAME = '予約データ';
+const TIME_ZONE = 'Asia/Tokyo';
+
+// GAS とシートのタイムゾーンの設定に左右されないよう，日本時間の文字列にして書く
+function nowText() {
+    return Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy/MM/dd HH:mm:ss');
+}
 // SHEET_COLUMNS は Logic.gs にあり，ファイルの読み込み順に頼らないよう関数にする
 function emailStatusColumn() {
     return SHEET_COLUMNS.indexOf('確認メール送信') + 1;
@@ -49,7 +55,7 @@ function doPost(e) {
             return json({ success: false, error: saved.errors.join('\n'), errors: saved.errors });
         }
         const emailSent = sendConfirmation(result.data);
-        saved.sheet.getRange(saved.row, emailStatusColumn()).setValue(emailSent ? new Date() : '失敗');
+        saved.sheet.getRange(saved.row, emailStatusColumn()).setValue(emailSent ? nowText() : '失敗');
         return json({ success: true, emailSent });
     } catch (error) {
         console.error('申込の処理に失敗: ' + error.message);
@@ -103,7 +109,7 @@ function saveReservation(data) {
         if (errors.length) {
             return { ok: false, errors };
         }
-        sheet.appendRow(toSheetRow(data, new Date()));
+        sheet.appendRow(toSheetRow(data, nowText()));
         SpreadsheetApp.flush();
         return { ok: true, sheet, row: sheet.getLastRow() };
     } finally {
@@ -168,8 +174,8 @@ function endTestMode() {
 // 初回に 1 度だけ実行し，予約データのシートと見出しを作る
 function setupSheet() {
     const spreadsheet = SpreadsheetApp.openById(getProperty('SPREADSHEET_ID'));
-    // シートのタイムゾーンはアカウントの地域で決まり，GAS と食い違うと日時がずれて見える
-    spreadsheet.setSpreadsheetTimeZone(Session.getScriptTimeZone());
+    // シートのタイムゾーンはアカウントの地域で決まるので，日本に固定する
+    spreadsheet.setSpreadsheetTimeZone(TIME_ZONE);
     const sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME, 0);
     sheet.getRange(1, 1, 1, SHEET_COLUMNS.length).setValues([SHEET_COLUMNS]).setFontWeight('bold');
     sheet.setFrozenRows(1);
@@ -188,6 +194,6 @@ function resendFailedConfirmations() {
             if (row[i] !== '') data[column] = row[i];
         });
         const sent = sendConfirmation(data);
-        sheet.getRange(index + 2, emailStatusColumn()).setValue(sent ? new Date() : '失敗');
+        sheet.getRange(index + 2, emailStatusColumn()).setValue(sent ? nowText() : '失敗');
     });
 }
