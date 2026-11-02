@@ -198,3 +198,24 @@ function buildConfirmationEmail(data, event) {
     );
     return { subject: `${event.title} 予約確認`, body: lines.join('\n') };
 }
+
+// 受付期間の判定．acceptFrom / acceptUntil は '2027-08-01T10:00:00+09:00' の形．開始が空なら受け付けない
+function checkAcceptance(event, now) {
+    if (!event.acceptFrom) {
+        return { open: false, message: '現在、申込は受け付けていません。' };
+    }
+    const from = new Date(event.acceptFrom);
+    if (now < from) {
+        // 日本時間で表すため 9 時間ずらして UTC として読む
+        const jst = new Date(from.getTime() + 9 * 60 * 60 * 1000);
+        const minutes = String(jst.getUTCMinutes()).padStart(2, '0');
+        return {
+            open: false,
+            message: `申込の受付は ${jst.getUTCMonth() + 1}月${jst.getUTCDate()}日 ${jst.getUTCHours()}:${minutes} からです。`
+        };
+    }
+    if (event.acceptUntil && now > new Date(event.acceptUntil)) {
+        return { open: false, message: '申込の受付は終了しました。' };
+    }
+    return { open: true, message: '' };
+}

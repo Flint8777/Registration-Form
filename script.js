@@ -1440,4 +1440,21 @@ document.addEventListener('DOMContentLoaded', () => {
     AccessibilityManager.manageAriaHidden();
 
     updateStep(CONFIG.STEPS.BASIC_INFO);
+
+    showClosedNoticeIfNeeded();
 });
+
+// 受付期間の外なら，フォームを隠して案内だけを出す．取得に失敗したらフォームは出したまま（GAS 側でも断る）
+async function showClosedNoticeIfNeeded() {
+    try {
+        const status = await fetchJson(`${CONFIG.API_URL}?action=status&t=${Date.now()}`);
+        if (!status.success || status.accepting) return;
+        document.getElementById('reservation-form').style.display = 'none';
+        document.querySelector('.step-indicator').style.display = 'none';
+        const notice = document.getElementById('errorMessage');
+        notice.textContent = status.message;
+        notice.classList.add('closed-notice');
+    } catch (error) {
+        console.error('受付状況の取得に失敗:', error);
+    }
+}

@@ -445,6 +445,17 @@ body::before {
     color: #8b4513;
 }
 
+/* 受付期間の外にフォームの代わりに出す案内 */
+.closed-notice {
+    margin: 30px 0;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    color: #8b4513;
+}
+
 .loading-overlay {
     position: fixed;
     top: 0;

@@ -65,6 +65,7 @@
 - [ ] Turnstile のウィジェットのホスト名と、スクリプト プロパティの `TURNSTILE_HOSTNAMES` に `localhost` が入っていないこと
 - [ ] スクリプト プロパティに `TEST_MODE` が無いこと（`endTestMode` を実行済み）
 - [ ] シートに試験の行が残っていないこと
+- [ ] `Event.gs` の受付期間（`acceptFrom` / `acceptUntil`）が今回の回の値になっていること
 - [ ] GAS の公開中の版が、リポジトリの `apps-script/reservation/` と同じコードであること
 - [ ] シートをチームのアカウントと閲覧者として共有し、ダウンロード・コピー・印刷を止めていること
 - [ ] `node --test "apps-script/reservation/test/*.test.mjs"` が通ること

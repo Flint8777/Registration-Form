@@ -33,6 +33,10 @@ function doGet(e) {
         if (action === 'getPlanetariumParts') {
             return json({ success: true, data: loadSeats(getSheet()).planetarium });
         }
+        if (action === 'status') {
+            const acceptance = checkAcceptance(EVENT, new Date());
+            return json({ success: true, accepting: acceptance.open, message: acceptance.message });
+        }
         return json({ success: false, error: '不明な要求です。' });
     } catch (error) {
         console.error('残席の取得に失敗: ' + error.message);
@@ -43,6 +47,10 @@ function doGet(e) {
 function doPost(e) {
     try {
         const params = (e && e.parameter) || {};
+        const acceptance = checkAcceptance(EVENT, new Date());
+        if (!acceptance.open) {
+            return json({ success: false, error: acceptance.message });
+        }
         if (!verifyTurnstile(params['cf-turnstile-response'])) {
             return json({ success: false, error: MESSAGES.turnstile });
         }
