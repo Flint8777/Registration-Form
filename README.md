@@ -34,10 +34,11 @@
 - 全選択肢表示（無効選択肢はグレーアウト）
 
 ### セキュリティ機能
-- 環境変数化: API URL 等の設定を `config.js`（Git 管理外）に外部化
-- XSS 対策: `escapeHtml()` による出力エスケープ
-- 入力検証: メールアドレス形式チェック、必須項目バリデーション
-- リファラーチェック・レート制限: バックエンド（GAS）側で実装
+- 権限の分離: GAS と予約のシートは幹部のアカウントが持ち、チームのアカウントは閲覧だけ
+- ボット対策: Cloudflare Turnstile（ふだんは画面に何も出ない）
+- 入力検証: フロントと GAS の両方で検証。GAS は選択肢・範囲・長さ・形式を確かめる
+- 定員: 残席の確認から書き込みまでを排他にし、同時の申込で定員を超えない
+- XSS 対策: `escapeHtml()` による出力エスケープと CSP
 
 ### 個人情報保護
 - フォーム内にプライバシーポリシーを掲載（折りたたみ式）
@@ -80,41 +81,35 @@ git clone https://github.com/flint8777/TEST_KesenNuma-StarryNight.git
 cd TEST_KesenNuma-StarryNight
 ```
 
-#### 2. 設定ファイルの作成
-```bash
-# 設定テンプレートをコピー
-cp config.example.js config.js
+#### 2. スプレッドシートの準備
+幹部のアカウントで空のスプレッドシートを作る。中身は GAS の `setupSheet` が作る。
 
-# config.js を編集してAPIエンドポイントを設定
-# API_URL: 'YOUR_GAS_DEPLOYMENT_URL_HERE' を実際のURLに変更
-```
+#### 3. Google Apps Script の設定（幹部のアカウント）
+1. script.google.com で独立型のプロジェクトを作り、タイムゾーンを東京にする
+2. `apps-script/reservation/` の `Code.gs`・`Logic.gs`・`Event.gs` を、同じ名前のファイルに貼る
+3. スクリプト プロパティを入れる
+   - `SPREADSHEET_ID`: 予約のシートの ID
+   - `TURNSTILE_SECRET`: Turnstile の秘密鍵
+   - `TURNSTILE_HOSTNAMES`: フォームを置くホスト名（本番は `flint8777.github.io`）
+4. `setupSheet` を一度だけ実行する
+5. ウェブアプリとしてデプロイする（実行ユーザー: 自分、アクセス: 全員）
+6. 確認メールをチームのアドレスから送るため、幹部のアカウントの Gmail で「他のアドレスとして送信」にチームのアドレスを登録しておく
 
-#### 3. Google Apps Scriptの設定
-1. Google Apps Scriptでプロジェクトを作成
-2. `apps-script/KB/Code.gs` の内容をコピー&ペースト
-3. `apps-script/KB/setup-environment.example.gs` をコピーして、Apps Script エディタ上で `setup-environment.gs` として作成し、実値（SPREADSHEET_ID、ADMIN_EMAIL など）を入れて `setupEnvironmentVariables()` を一度だけ実行
-4. ウェブアプリとしてデプロイ
-   - 実行ユーザー: 自分
-   - アクセス権: 全員
-5. デプロイURLを`config.js`の`API_URL`に設定
+コードを変えたら、貼り直したうえで「デプロイを管理」から新バージョンにする。保存しただけでは公開中の版に反映されない。
 
-> ⚠️ `setup-environment.gs` は SPREADSHEET_ID 等を含むためリポジトリには戻さないこと。
-> `.gitignore` で除外済みだが、Apps Script 側でのみ管理する。
+#### 4. フロントの設定
+`config.js` に GAS の URL と Turnstile のサイトキーを書く。どちらもブラウザから見える値なので、コミットしてよい。
 
-#### 4. スプレッドシートの準備
-1. Googleスプレッドシートを作成
-2. 予約データ用のシートを準備
-3. Apps Scriptからのアクセス権限を設定
-
-### 環境変数設定
 ```javascript
-// config.js での設定例
 const SITE_CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
-    MAX_PARTICIPANTS: 6,
-    TIMEOUT_MS: 30000
+    API_URL: 'https://script.google.com/macros/s/<デプロイ ID>/exec',
+    TURNSTILE_SITEKEY: '<サイトキー>'
 };
 ```
+
+#### 5. 試験
+- `Logic.gs` のテスト: `node --test "apps-script/reservation/test/*.test.mjs"`
+- 申込の試験: GAS エディタで `startTestMode` → フォームから申し込む → シートの試験の行を消す → `endTestMode`。試験モードの間は BCC を付けず、件名に【試験】を付ける
 
 ### システム設定（オプション）
 
@@ -132,8 +127,7 @@ const SITE_CONFIG = {
 ├── styles.css              # スタイルシート（グレーアウト対応含む）
 ├── script.js               # フロントエンド機能（統一UI・残席表示）
 ├── iframe-embed-codes.html # 埋め込みコード
-├── config.example.js       # 設定テンプレート
-├── config.js               # 実際の設定（Git非公開）
+├── config.js               # GAS の URL と Turnstile のサイトキー（公開してよい値）
 ├── manifest.json           # PWA設定
 ├── README.md               # このファイル
 ├── SECURITY.md             # セキュリティガイド
@@ -144,13 +138,13 @@ const SITE_CONFIG = {
 │   ├── 観望会ロゴタイプ_黒.png  # メインロゴ
 │   ├── シンボルマーク.png      # ファビコン・アプリアイコン
 │   └── OGP-image.png          # SNSシェア用画像
-├── apps-script/             # GAS バックエンド（リポジトリ管理対象）
-│   └── KB/
-│       ├── Code.gs                          # メインAPI（doGet/doPost、検証、メール送信）
-│       ├── setup-environment.example.gs     # 環境変数セットアップのテンプレート
-│       └── appsscript.json                  # Apps Script マニフェスト
-│
-│   ※ 実値を含む setup-environment.gs は .gitignore で除外
+├── apps-script/             # GAS バックエンド（幹部のアカウントのエディタに手で貼る）
+│   └── reservation/
+│       ├── Code.gs              # doGet（残席）・doPost（申込）、シート・Gmail の操作
+│       ├── Logic.gs             # 入力検査・残席計算・メール本文（Google のサービスに依存しない）
+│       ├── Event.gs             # 回ごとに変える値（題名・日時・会場・部と定員）
+│       ├── appsscript.json      # Apps Script マニフェスト（参考）
+│       └── test/                # Logic.gs の Node テスト
 └── .github/                 # GitHub設定
     └── ISSUE_TEMPLATE/      # Issue テンプレート
 ```
@@ -204,7 +198,7 @@ const SITE_CONFIG = {
 - プラネタリウム（はい/いいえ）の選択
 - 時間帯ごとの予約（残席あり/残席なしの表示）
 - 残席不足や満席の時間帯は選択肢としてグレーアウト表示
-- 入力検証と基本的なセキュリティ対策（XSS、レート制限など）
+- 入力検証と基本的なセキュリティ対策（XSS、ボット対策、定員の排他など）
 
 セットアップ（開発/運用）
 ----
@@ -213,30 +207,7 @@ const SITE_CONFIG = {
     git clone https://github.com/flint8777/TEST_KesenNuma-StarryNight.git
     cd TEST_KesenNuma-StarryNight
 
-2. 設定ファイルの準備
-
-    - `config.example.js` をコピーして `config.js` を作成し、`API_URL` をデプロイ済みの Google Apps Script の URL に変更してください。
-
-3. Google Apps Script のデプロイ
-
-    - `apps-script/KB/Code.gs` を Apps Script プロジェクトにコピーし、ウェブアプリとしてデプロイします。
-    - `apps-script/KB/setup-environment.example.gs` を参考に Script Properties を設定してください（SPREADSHEET_ID / ADMIN_EMAIL は必須）。実値版の `setup-environment.gs` はコミットせず、Apps Script 側のみで管理してください（.gitignore 済み）。
-
-4. スプレッドシートの準備
-
-    - 予約データ用のスプレッドシートを作成し、Apps Script からの書き込み権限を確認してください。
-
-設定例
-----
-config.js の基本例:
-
-```javascript
-const SITE_CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
-  MAX_PARTICIPANTS: 6,
-  TIMEOUT_MS: 30000
-};
-```
+2. 以降の手順は、上の「セットアップ」の 2〜5 を参照してください。
 
 プロジェクト構成（主なファイル）
 ----
@@ -244,19 +215,16 @@ const SITE_CONFIG = {
 - styles.css
 - script.js
 - iframe-embed-codes.html
-- config.example.js
-- config.js (運用時は Git 管理外にすること)
+- config.js（GAS の URL と Turnstile のサイトキー）
 - manifest.json
 - SECURITY.md
 - Images/
-- apps-script/KB/Code.gs（GAS バックエンド本体）
-- apps-script/KB/setup-environment.example.gs（環境変数セットアップのテンプレート）
-- apps-script/KB/setup-environment.gs（実値版・Git 管理外）
+- apps-script/reservation/（GAS バックエンド: Code.gs・Logic.gs・Event.gs）
 
 注意事項
 ----
-- デモ環境では一部機能（メール送信など）を無効化している場合があります。運用時は `setup-environment.gs` で環境変数を適切に設定してください。
-- 本番では `ALLOW_DIRECT_ACCESS` や `ENABLE_REFERRER_CHECK` 等のセキュリティ設定を見直してください。
+- 回ごとに `apps-script/reservation/Event.gs` の題名・受付期間・日時・会場・部を書き換えてください。部の名前はフォームとシートにそのまま出ます。受付期間の外では、フォームは案内だけを出し、GAS も申込を断ります。
+- 公開前に SECURITY.md のチェックリストを確かめてください。
 
 履歴
 ----
