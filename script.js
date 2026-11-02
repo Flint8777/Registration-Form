@@ -676,15 +676,16 @@ function saveCurrentStepData() {
     }
 }
 
-// GAS の GET エンドポイントから JSON を取得する
-// 旧実装は <script> タグ経由の JSONP でレスポンスを任意 JS として実行していた。
+// GAS のエンドポイントから JSON を取得する
 // GAS 側は応答時に Access-Control-Allow-Origin を付与しているため、通常の fetch で十分。
-async function fetchJson(url, { timeoutMs = 15000 } = {}) {
+// POST の body は URLSearchParams にする（単純リクエストになり，事前の確認要求が飛ばない）
+async function fetchJson(url, { timeoutMs = 15000, method = 'GET', body } = {}) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
         const res = await fetch(url, {
-            method: 'GET',
+            method,
+            body,
             redirect: 'follow',
             signal: controller.signal,
             headers: { 'Accept': 'application/json' }
@@ -960,143 +961,77 @@ function generateConfirmationContent() {
     elements.confirmationContent.innerHTML = content;
 }
 
-// フォーム送信（高速応答版 - 先に完了画面表示）
+// Turnstile（ボット判定）．ふだんは画面に何も出ず，疑わしいときだけ確認の欄が出る
+// トークンは 5 分で切れ，1 回しか使えないので，送信のたびに作り直す
+let turnstileWidgetId = null;
+
+function getTurnstileToken() {
+    return new Promise((resolve, reject) => {
+        if (!window.turnstile) {
+            reject(new Error('Turnstile を読み込めませんでした'));
+            return;
+        }
+        if (turnstileWidgetId !== null) {
+            window.turnstile.remove(turnstileWidgetId);
+        }
+        turnstileWidgetId = window.turnstile.render('#turnstile-container', {
+            sitekey: SITE_CONFIG.TURNSTILE_SITEKEY,
+            appearance: 'interaction-only',
+            language: 'ja',
+            callback: resolve,
+            'error-callback': () => reject(new Error('Turnstile の確認に失敗しました')),
+            'timeout-callback': () => reject(new Error('Turnstile の確認が時間切れになりました'))
+        });
+    });
+}
+
+function showCompletionMessage(emailSent) {
+    const completionMessage = document.querySelector('.completion-message');
+    if (!completionMessage) return;
+    const emailLine = emailSent
+        ? '確認メールをお送りいたしました。'
+        : '確認メールの送信に失敗しました。後ほどあらためてお送りします。';
+    completionMessage.innerHTML = `
+        ✅ ご予約が完了しました！<br>
+        ${emailLine}<br>
+        当日は気をつけてお越しください。<br>
+        <small style="color: #ffffff; margin-top: 10px; display: block;">
+            予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
+            kanbokaidaisakusen@gmail.com までご連絡ください。
+        </small>
+    `;
+}
+
+// フォーム送信．GAS の返事を待ち，断られたら理由を出して今の画面に留まる
 async function submitForm() {
+    setLoading(true);
+    setButtonLoading(elements.submitBtn, true, '🎯 登録完了');
+    let token;
     try {
-        setLoading(true);
-
-        // submitボタンのローディング状態を開始
-        setButtonLoading(elements.submitBtn, true, '🎯 登録完了');
-
-        // FormDataを作成
-        const formDataForSubmit = new FormData();
-        Object.keys(formData).forEach(key => {
-            formDataForSubmit.append(key, formData[key]);
-        });
-
-        // 短いローディング表示（1秒）後に完了画面表示
-        // ユーザー体験向上のため、バックグラウンド処理の前に画面遷移
-        setTimeout(() => {
-            // 完了画面に先に遷移
-            updateStep(CONFIG.STEPS.COMPLETION);
-            showResult('予約が送信されました！確認メールをお送りしています...', true);
-
-            // ローディング状態を終了
-            setLoading(false);
-            setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
-
-            // 送信完了メッセージを表示
-            const completionMessage = document.querySelector('.completion-message');
-            if (completionMessage) {
-                completionMessage.innerHTML = `
-                    ✅ ご予約が完了しました！<br>
-                    確認メールを送信中です。しばらくお待ちください。<br>
-                    当日は気をつけてお越しください。<br>
-                    <small style="color: #ffffff; margin-top: 10px; display: block;">
-                        予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
-                        kanbokaidaisakusen@gmail.com までご連絡ください。
-                    </small>
-                `;
-            }
-        }, 800); // 0.8秒後に完了画面表示（ユーザー体験向上）
-
-        // バックグラウンドでフォーム送信処理を実行
-        // 隠しiframeを作成
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.name = 'submitFrame';
-        document.body.appendChild(iframe);
-
-        // 動的フォームを作成
-        const submitFormElement = document.createElement('form');
-        submitFormElement.method = 'POST';
-        submitFormElement.action = CONFIG.API_URL;
-        submitFormElement.target = 'submitFrame';
-
-        // フォームデータを追加
-        Object.keys(formData).forEach(key => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = formData[key];
-            submitFormElement.appendChild(input);
-        });
-
-        document.body.appendChild(submitFormElement);
-
-        // iframe読み込み完了時の処理
-        iframe.onload = function () {
-            try {
-                console.log('バックグラウンド送信完了');
-
-                // フォームとiframeを削除
-                document.body.removeChild(submitFormElement);
-                document.body.removeChild(iframe);
-
-                // 送信完了メッセージを更新
-                const completionMessage = document.querySelector('.completion-message');
-                if (completionMessage) {
-                    completionMessage.innerHTML = `
-                        ✅ ご予約が完了しました！<br>
-                        確認メールをお送りいたしました。<br>
-                        当日は気をつけてお越しください。<br>
-                        <small style="color: #ffffff; margin-top: 10px; display: block;">
-                            予約内容の変更・キャンセル・個人情報の削除をご希望の場合は、<br>
-                            kanbokaidaisakusen@gmail.com までご連絡ください。
-                        </small>
-                    `;
-                }
-            } catch (error) {
-                console.error('送信完了処理エラー:', error);
-            }
-        };
-
-        // iframe エラー処理
-        iframe.onerror = function () {
-            console.error('iframe読み込みエラー');
-            const completionMessage = document.querySelector('.completion-message');
-            if (completionMessage) {
-                completionMessage.innerHTML = `
-                    ⚠️ 送信中にエラーが発生した可能性があります。<br>
-                    しばらく経っても確認メールが届かない場合は、<br>
-                    お手数ですが再度お申し込みください。<br>
-                    <small style="color: #ffffff; margin-top: 10px; display: block;">
-                        問題が解決しない場合は kanbokaidaisakusen@gmail.com までご連絡ください。
-                    </small>
-                `;
-            }
-        };
-
-        // 送信タイムアウト検知（30秒）
-        let submitCompleted = false;
-        const originalOnload = iframe.onload;
-        iframe.onload = function () {
-            submitCompleted = true;
-            originalOnload.call(this);
-        };
-        setTimeout(() => {
-            if (!submitCompleted) {
-                console.warn('送信タイムアウト: 30秒以内に応答がありませんでした');
-                const completionMessage = document.querySelector('.completion-message');
-                if (completionMessage) {
-                    completionMessage.innerHTML = `
-                        ⚠️ サーバーからの応答に時間がかかっています。<br>
-                        予約は送信済みですが、確認メールが届かない場合は<br>
-                        再度お申し込みいただくか、下記までご連絡ください。<br>
-                        <small style="color: #ffffff; margin-top: 10px; display: block;">
-                            kanbokaidaisakusen@gmail.com
-                        </small>
-                    `;
-                }
-            }
-        }, 30000);
-
-        // フォーム送信
-        submitFormElement.submit();
-
+        token = await getTurnstileToken();
     } catch (error) {
+        console.error('Turnstile エラー:', error);
+        showResult('送信を確認できませんでした。ページを再読み込みして、もう一度お試しください。', false);
+        setLoading(false);
+        setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
+        return;
+    }
+    try {
+        const body = new URLSearchParams({ ...formData, 'cf-turnstile-response': token });
+        const result = await fetchJson(CONFIG.API_URL, { method: 'POST', body, timeoutMs: 30000 });
+        if (!result.success) {
+            const detail = Array.isArray(result.errors) && result.errors.length ? result.errors.join(' ') : '';
+            showResult([result.error, detail].filter(Boolean).join(' ') || '登録の送信に失敗しました。もう一度お試しください。', false);
+            return;
+        }
+        updateStep(CONFIG.STEPS.COMPLETION);
+        showResult('予約が完了しました！', true);
+        showCompletionMessage(result.emailSent !== false);
+    } catch (error) {
+        // 応答が無いだけで受付は済んでいるかもしれないので，送り直しは勧めない
         console.error('登録送信エラー:', error);
-        showResult('登録の送信に失敗しました。もう一度お試しください。', false);
+        showResult('サーバーからの応答を確認できませんでした。確認メールが届かない場合は kanbokaidaisakusen@gmail.com までご連絡ください。', false);
+    } finally {
         setLoading(false);
         setButtonLoading(elements.submitBtn, false, '🎯 登録完了');
     }
