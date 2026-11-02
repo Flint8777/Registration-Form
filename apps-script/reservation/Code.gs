@@ -3,6 +3,7 @@
 //   SPREADSHEET_ID      予約のシートの ID
 //   TURNSTILE_SECRET    Turnstile の秘密鍵
 //   TURNSTILE_HOSTNAMES フォームを置くホスト名（カンマ区切り）．本番に localhost を入れない
+//   TEST_MODE           'true' の間は試験モード．startTestMode / endTestMode で切り替える
 
 const SHEET_NAME = '予約データ';
 // SHEET_COLUMNS は Logic.gs にあり，ファイルの読み込み順に頼らないよう関数にする
@@ -128,17 +129,22 @@ function verifyTurnstile(token) {
     return result.success === true && hostnames.includes(result.hostname);
 }
 
+function isTestMode() {
+    return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'true';
+}
+
 // 差出人と返信先はチームのアドレス．BCC でチームに控えを残す
+// 試験モードの間は BCC を付けず，件名の頭に【試験】を付ける
 // 宛先が入るので，失敗しても例外の文面はログに出さない
 function sendConfirmation(data) {
     try {
         const { subject, body } = buildConfirmationEmail(data, EVENT);
-        GmailApp.sendEmail(data.メールアドレス, subject, body, {
-            from: EVENT.contact,
-            name: EVENT.senderName,
-            replyTo: EVENT.contact,
-            bcc: EVENT.contact
-        });
+        const testMode = isTestMode();
+        const options = { from: EVENT.contact, name: EVENT.senderName, replyTo: EVENT.contact };
+        if (!testMode) {
+            options.bcc = EVENT.contact;
+        }
+        GmailApp.sendEmail(data.メールアドレス, testMode ? `【試験】${subject}` : subject, body, options);
         return true;
     } catch (error) {
         console.error('確認メールの送信に失敗: ' + error.name);
@@ -147,6 +153,17 @@ function sendConfirmation(data) {
 }
 
 // 以下はエディタから手で実行する
+
+// 試験モードに入る．公開中の版にもすぐ効く（デプロイし直さなくてよい）
+function startTestMode() {
+    PropertiesService.getScriptProperties().setProperty('TEST_MODE', 'true');
+    console.log('試験モードにしました．確認メールに BCC を付けず，件名に【試験】を付けます．終わったら endTestMode を実行してください');
+}
+
+function endTestMode() {
+    PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
+    console.log('本番に戻しました．確認メールは BCC 付きで送ります');
+}
 
 // 初回に 1 度だけ実行し，予約データのシートと見出しを作る
 function setupSheet() {
