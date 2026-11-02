@@ -1,5 +1,4 @@
-# 機密設定（GASデプロイURL・SPREADSHEET_IDなどを含むため絶対にコミットしない）
-config.js
+# GAS 側の実値（SPREADSHEET_ID などはスクリプト プロパティに置き，リポジトリに書かない）
 apps-script/**/setup-environment.gs
 apps-script/**/Temp.gs
 apps-script/**/*.local.gs

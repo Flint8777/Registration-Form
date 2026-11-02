@@ -52,10 +52,10 @@ class AccessibilityManager {
 }
 
 // 定数定義（DRY原則適用）
-// API_URL は config.js で定義された SITE_CONFIG から読み込む（コミット禁止）
+// API_URL と Turnstile のサイトキーは config.js の SITE_CONFIG から読み込む
 // 未設定のまま起動すると API 呼び出しが空 URL になるため、起動時に明示的に止める
 if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.API_URL) {
-    throw new Error('SITE_CONFIG.API_URL が未定義です。config.example.js を config.js にコピーして API_URL を設定してください。');
+    throw new Error('SITE_CONFIG.API_URL が未定義です。config.js を確認してください。');
 }
 const CONFIG = {
     API_URL: SITE_CONFIG.API_URL,
