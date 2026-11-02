@@ -168,6 +168,8 @@ function endTestMode() {
 // 初回に 1 度だけ実行し，予約データのシートと見出しを作る
 function setupSheet() {
     const spreadsheet = SpreadsheetApp.openById(getProperty('SPREADSHEET_ID'));
+    // シートのタイムゾーンはアカウントの地域で決まり，GAS と食い違うと日時がずれて見える
+    spreadsheet.setSpreadsheetTimeZone(Session.getScriptTimeZone());
     const sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME, 0);
     sheet.getRange(1, 1, 1, SHEET_COLUMNS.length).setValues([SHEET_COLUMNS]).setFontWeight('bold');
     sheet.setFrozenRows(1);
