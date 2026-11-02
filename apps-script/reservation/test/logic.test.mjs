@@ -12,9 +12,9 @@ for (const file of ['Event.gs', 'Logic.gs']) {
 // .gs のトップレベルの const は context のプロパティにならないので，同じ context で式として取り出す
 const {
     EVENT, SHEET_COLUMNS, validateReservation, summarizeSeats, bookingsFromRows,
-    findCapacityErrors, toSheetRow, escapeForSheet, buildConfirmationEmail
+    findCapacityErrors, toSheetRow, escapeForSheet, buildConfirmationEmail, checkAcceptance
 } = vm.runInContext(
-    '({ EVENT, SHEET_COLUMNS, validateReservation, summarizeSeats, bookingsFromRows, findCapacityErrors, toSheetRow, escapeForSheet, buildConfirmationEmail })',
+    '({ EVENT, SHEET_COLUMNS, validateReservation, summarizeSeats, bookingsFromRows, findCapacityErrors, toSheetRow, escapeForSheet, buildConfirmationEmail, checkAcceptance })',
     context
 );
 
@@ -217,4 +217,31 @@ test('確認メールには予約内容と開催情報が入り，参加しな�
     assert.ok(!body.includes('鑑賞人数'));
     assert.ok(body.includes(EVENT.dateText));
     assert.ok(body.includes(EVENT.contact));
+});
+
+test('受付期間が決まっていなければ受け付けない', () => {
+    const result = checkAcceptance({ acceptFrom: '', acceptUntil: '' }, new Date('2027-08-01T00:00:00+09:00'));
+    assert.equal(result.open, false);
+    assert.equal(result.message, '現在、申込は受け付けていません。');
+});
+
+test('受付の開始前は，開始の日時（日本時間）を示して断る', () => {
+    const event = { acceptFrom: '2027-08-01T10:00:00+09:00', acceptUntil: '2027-09-20T23:59:59+09:00' };
+    const result = checkAcceptance(event, new Date('2027-08-01T09:59:00+09:00'));
+    assert.equal(result.open, false);
+    assert.equal(result.message, '申込の受付は 8月1日 10:00 からです。');
+});
+
+test('受付期間の中は受け付ける．終わりが空なら開始後はずっと受け付ける', () => {
+    const event = { acceptFrom: '2027-08-01T10:00:00+09:00', acceptUntil: '2027-09-20T23:59:59+09:00' };
+    assert.equal(checkAcceptance(event, new Date('2027-08-01T10:00:00+09:00')).open, true);
+    assert.equal(checkAcceptance(event, new Date('2027-09-20T23:59:59+09:00')).open, true);
+    assert.equal(checkAcceptance({ acceptFrom: event.acceptFrom, acceptUntil: '' }, new Date('2030-01-01T00:00:00+09:00')).open, true);
+});
+
+test('受付の終了後は断る', () => {
+    const event = { acceptFrom: '2027-08-01T10:00:00+09:00', acceptUntil: '2027-09-20T23:59:59+09:00' };
+    const result = checkAcceptance(event, new Date('2027-09-21T00:00:00+09:00'));
+    assert.equal(result.open, false);
+    assert.equal(result.message, '申込の受付は終了しました。');
 });
