@@ -445,6 +445,16 @@ body::before {
     color: #8b4513;
 }
 
+/* 受付状況が返るまではフォームを出さず，読み込み中だけを出す */
+.checking-status .step-indicator,
+.checking-status #reservation-form {
+    display: none;
+}
+
+.checking-status #loading {
+    display: block;
+}
+
 /* 受付期間の外にフォームの代わりに出す案内 */
 .closed-notice {
     margin: 30px 0;

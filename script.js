@@ -267,7 +267,7 @@ function showEmailConfirmValidation(isValid, message) {
 }
 
 // ステップ更新
-function updateStep(step) {
+function updateStep(step, { focus = true } = {}) {
     // アクセシビリティ管理
     AccessibilityManager.announcePageChange(step);
     AccessibilityManager.updateProgressBar(step, CONFIG.STEPS.COMPLETION);
@@ -291,7 +291,7 @@ function updateStep(step) {
 
                 // アクティブなステップの最初のフォーカス可能要素にフォーカス
                 const firstInput = contentElement.querySelector('input, select, textarea, button');
-                if (firstInput) {
+                if (firstInput && focus) {
                     AccessibilityManager.setFocusToElement(firstInput.id || firstInput.name);
                 }
             } else {
@@ -1433,21 +1433,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // イベントリスナーを設定
     setupEventListeners();
 
-    // ローディング状態を初期化（非表示に）
-    setLoading(false);
-
     // アクセシビリティ管理を初期化
     AccessibilityManager.manageAriaHidden();
 
-    updateStep(CONFIG.STEPS.BASIC_INFO);
+    // 最初の欄にフォーカスすると，埋め込み先で iframe の中がその欄まで巻き取られるので，開いた直後はフォーカスしない
+    updateStep(CONFIG.STEPS.BASIC_INFO, { focus: false });
 
     showClosedNoticeIfNeeded();
 });
 
-// 受付期間の外なら，フォームを隠して案内だけを出す．取得に失敗したらフォームは出したまま（GAS 側でも断る）
+// 受付状況が返るまでフォームを隠しておき（body の checking-status），受付期間の外なら案内だけを出す
+// 取得に失敗したらフォームを出す（GAS 側でも断る）
 async function showClosedNoticeIfNeeded() {
     try {
-        const status = await fetchJson(`${CONFIG.API_URL}?action=status&t=${Date.now()}`);
+        const status = await fetchJson(`${CONFIG.API_URL}?action=status&t=${Date.now()}`, { timeoutMs: 10000 });
         if (!status.success || status.accepting) return;
         document.getElementById('reservation-form').style.display = 'none';
         document.querySelector('.step-indicator').style.display = 'none';
@@ -1456,5 +1455,7 @@ async function showClosedNoticeIfNeeded() {
         notice.classList.add('closed-notice');
     } catch (error) {
         console.error('受付状況の取得に失敗:', error);
+    } finally {
+        document.body.classList.remove('checking-status');
     }
 }
